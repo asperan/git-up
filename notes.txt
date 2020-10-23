@@ -1,0 +1,23 @@
+# Gets the latest commited remote tag
+curl https://api.github.com/repos/discordjs/discord.js/tags | \
+  grep 'name' | \
+  grep '"[0-9]*\.[0-9]*\.[0-9]*",$' | \
+  sort | \
+  tail -n 1 | \
+  tr -s ' ' | \
+  sed 's/^\ //' | \
+  cut -d ' ' -f 2 | \
+  sed 's/[",]//g'
+
+# Get the latest local tag
+git tag | tail -n X
+
+# Config file template
+repositories:
+  - name: Name of the repository
+    author: Name of the author, which is the owner of the repository
+    path: Path on the local machine of the repository
+    version_regex: Regex which defines the repository version naming system
+    install_script: Path of the script used to install the repo
+
+
