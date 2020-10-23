@@ -9,15 +9,23 @@ curl https://api.github.com/repos/discordjs/discord.js/tags | \
   cut -d ' ' -f 2 | \
   sed 's/[",]//g'
 
+# Fetch all the repo informations, including tags
+git fetch --all --tags
+
 # Get the latest local tag
 git tag | tail -n X
 
 # Config file template
-repositories:
-  - name: Name of the repository
-    author: Name of the author, which is the owner of the repository
-    path: Path on the local machine of the repository
-    version_regex: Regex which defines the repository version naming system
-    install_script: Path of the script used to install the repo
-
+- name: Name of the repository
+  author: Name of the author, which is the owner of the repository
+  path: Absolute path on the local machine of the repository. All the missing directories will be created.
+  version_regex: Regex which defines the repository version naming system
+  install_script: Path of the script used to install the repo
+- name: ...
+  author: ...
+  path: ...
+  version_regex: ...
+  install_script: ...
+- name: ...
+  ...
 
