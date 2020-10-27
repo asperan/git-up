@@ -15,6 +15,21 @@ git fetch --all --tags
 # Get the latest local tag
 git tag | tail -n X
 
+# Flow for new repos
+- create local directory if not present
+- `git init` in the directory
+- `git fetch --tags <URL>` 
+    where URL is "host + '/' + name + '/' + author + '.git'"
+- `git merge <commit|tag>
+- run install script
+
+# Flow for old repos
+- cd into directory
+- `git fetch --tags <URL>`
+- `git merge <commit|tag>`
+- run install script
+
+
 # Config file template
 
 repositories:
