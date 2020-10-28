@@ -9,11 +9,22 @@ curl https://api.github.com/repos/discordjs/discord.js/tags | \
   cut -d ' ' -f 2 | \
   sed 's/[",]//g'
 
+# Gets last commit on master
+git log origin/master --first-parent -n 1 --format="%H"
+
+# Gets current commit
+git show | head -n 1 | cut -d ' ' -f 2
+or
+git log --format="%H" -n 1
+
+# Gets last tag
+git tag --sort=committerdate | tail -n 1
+
 # Fetch all the repo informations, including tags
 git fetch --all --tags
 
 # Get the latest local tag
-git tag | tail -n X
+git describe --tags
 
 # Flow for new repos
 - create local directory if not present
