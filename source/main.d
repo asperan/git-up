@@ -20,7 +20,12 @@ void main(string[] args) {
     }
 }
 
-void printHelp(string message = "") {
+/** Prints help message.
+    parameters:
+    - message: message to display before the help message. 
+               If empty nothing is displayed.
+*/
+private void printHelp(string message = "") {
     if (message.length != 0) {
         writeln(message);
     }
