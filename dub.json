@@ -1,0 +1,15 @@
+{
+	"authors": [
+		"Alex Speranza"
+	],
+	"copyright": "Copyright © 2020, Alex Speranza",
+	"dependencies": {
+		"dyaml": "~>0.8.3"
+	},
+	"description": "Command line tool to manage updates of git repositories.",
+	"license": "MPL-2.0",
+	"name": "git-update",
+	"targetType": "executable",
+	"targetName": "git-update.exe",
+	"buildOptions": ["optimize", "warningsAsErrors"]
+}
