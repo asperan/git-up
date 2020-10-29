@@ -127,3 +127,47 @@ struct RuntimeOption {
 
 }
 
+private immutable(Option*) searchOption(string option) {
+  for (int i = 0; i < options.length; i++) {
+    if (options[i] == option) {
+      return &options[i];
+    }
+  }
+  return null;
+}
+
+/**
+    Parses the input argument list and divides it into the main argument, 
+    if present, and the potential options.
+*/
+void parseArguments(in string[] args, out string mainArg, out RuntimeOption[] activeOptions) {
+  for (int i = 0; i < args.length; i++) {
+    if (args[i][0..1] == "-" || args[i][0..2] == "--") {
+      immutable(Option*) opt = searchOption(args[i]);
+      if (opt != null) {
+        if (opt.needArgument) {
+          assert(i < (args.length - 1), "Last option required an argument, but argument list has finished.");
+          string extraArgument = args[i+1];
+          activeOptions ~= [RuntimeOption(opt, extraArgument)];
+          i++;
+        } else {
+          activeOptions ~= [RuntimeOption(opt)];
+        }
+      }
+    } else {
+      if (mainArg == null) {
+        writeln("First main argument found: " ~ args[i]);
+        mainArg = args[i];
+      }
+    }
+  }
+}
+
+unittest {
+  string[] args = ["--help", "file"];
+  string mainArgument;
+  RuntimeOption[] runtimeOptions;
+  parseArguments(args, mainArgument, runtimeOptions);
+  assert(mainArgument == "file");
+  assert(runtimeOptions.length == 1);
+}
