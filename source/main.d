@@ -1,7 +1,8 @@
 module main;
 
 import std.stdio;
+import apply;
 
 void main() {
-    writeln("Hello, world!");
+    apply.apply("./Gitfile");
 }
