@@ -70,7 +70,7 @@ struct Option {
  *  The options array contains all 
  *  the available options for git-update.
  */
-immutable(immutable(Option)[]) options = [
+shared immutable(immutable(Option))[] options  = [
   Option("-h", "--help", "Show help panel and exit.", false, true),
   Option("-v", "--version", "Show program version and exit.", false, true)
 ];
@@ -117,7 +117,7 @@ struct RuntimeOption {
     }
 
     /** Return a pointer to its parent Option. */
-    @property immutable(Option*) option() immutable { return p_option; }
+    @property immutable(Option*) option() const { return p_option; }
     /** Return a pointer to the argument for the option. */
     @property string optionArgument() const pure  { return p_optionArgument; }
 
