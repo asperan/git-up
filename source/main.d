@@ -7,7 +7,7 @@ import arg_parser;
 int main(string[] args) {
   args = args[1..$];
   if (args.length <= 0) {
-    print_help.helpMessage("Error: No operation has been specified.");
+    print_help.helpMessage("Error: No operation or lone option has been specified.");
     return 1;
   } else {
     string mod = args[0];
