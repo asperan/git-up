@@ -7,18 +7,18 @@ private immutable string VERSION = "0.1.0";
 
 /** Prints help message.
     parameters:
-    - message: message to display before the help message. 
-               If empty nothing is displayed.
+    - errorMessage: message to display before the help message. 
+                    If empty nothing is displayed.
 */
-void helpMessage(in string message = "") {
-  if (message.length != 0) {
-      writeln(message);
+void helpMessage(in string errorMessage = "") {
+  if (errorMessage.length != 0) {
+      writeln(errorMessage);
   }
   // TODO: prettify help string
   string helpString =
-    `Usage: git-update <module> [path/to/Gitfile] [options]` ~ "\n" ~
+    `Usage: git-update <operation> [path/to/Gitfile] [options]` ~ "\n" ~
     "\n" ~
-    `Modules:` ~ "\n" ~
+    `Operations:` ~ "\n" ~
     `  - apply => applies the gitfile configuration of repositories` ~ "\n" ~
     "\n";
 
