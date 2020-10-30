@@ -67,7 +67,10 @@ struct Option {
  *  The options array contains all 
  *  the available options for git-update.
  */
-immutable(immutable(Option)[]) options = [Option("-h", "--help", "Show help panel.", false, true)];
+immutable(immutable(Option)[]) options = [
+  Option("-h", "--help", "Show help panel and exit.", false, true),
+  Option("-v", "--version", "Show program version and exit.", false, true)
+];
 
 /+
     /** If optionArgument is an empty string,
@@ -146,6 +149,11 @@ void parseArguments(in string[] args, out string mainArg, out RuntimeOption[] ac
       immutable(Option*) opt = searchOption(args[i]);
       if (opt != null) {
         if (opt.needArgument) {
+          /** args.length will never be less or equal to 0, 
+              as in that case the outer for is never entered.
+              So in the following assertion there is no problem
+              related to subtracting 1 to an unsigned value.
+          */
           assert(i < (args.length - 1), "Last option required an argument, but argument list has finished.");
           string extraArgument = args[i+1];
           activeOptions ~= [RuntimeOption(opt, extraArgument)];
@@ -155,8 +163,10 @@ void parseArguments(in string[] args, out string mainArg, out RuntimeOption[] ac
         }
       }
     } else {
-      if (mainArg == null) {
-        writeln("First main argument found: " ~ args[i]);
+      /** Only the first main argument is parsed.
+          Subsequent arguments will be ignored.
+      */
+      if (mainArg == null) {        
         mainArg = args[i];
       }
     }
