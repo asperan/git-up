@@ -3,6 +3,7 @@ module main;
 import print_help;
 import apply;
 import arg_parser;
+import core.stdc.stdlib;
 
 int main(string[] args) {
   args = args[1..$];
@@ -10,19 +11,42 @@ int main(string[] args) {
     print_help.helpMessage("Error: No operation or lone option has been specified.");
     return 1;
   } else {
-    string mod = args[0];
-    switch (mod) {
+    string operation;
+    string mainArgument;
+    RuntimeOption[] options;
+    arg_parser.parseArguments(args, operation, mainArgument, options);
+    checkLoneOptions(options);
+    // TODO: apply options
+    switch (operation) {
       case "apply":
-        apply.apply("./Gitfile");
-        break;
-      case "-v":
-      case "--version":
-        print_help.versionMessage();
+        apply.apply(mainArgument);
         break;
       default:
-        print_help.helpMessage("Error: Operation '" ~ mod ~ "' not recognized.");
-        return 1;
+        print_help.helpMessage("Error: Operation '" ~ operation ~ "' not recognized.");
+        exit(1);
     }
   }
   return 0;
+}
+
+private void checkLoneOptions(RuntimeOption[] options) {
+  foreach (option; options)
+  {
+    if (option.option.isLone) {
+      handleLoneOption(option);
+    }
+  }
+}
+
+private void handleLoneOption(RuntimeOption option) {
+  final switch(option.option.shortVersion) {
+    case "-h":
+      print_help.helpMessage();
+      exit(0);
+      break;
+    case "-v":
+      print_help.versionMessage();
+      exit(0);
+      break;
+  }
 }
