@@ -4,10 +4,11 @@ import print_help;
 import apply;
 import arg_parser;
 
-void main(string[] args) {
+int main(string[] args) {
   args = args[1..$];
   if (args.length <= 0) {
-    print_help.helpMessage("Error: No module has been specified.");
+    print_help.helpMessage("Error: No operation has been specified.");
+    return 1;
   } else {
     string mod = args[0];
     switch (mod) {
@@ -19,8 +20,9 @@ void main(string[] args) {
         print_help.versionMessage();
         break;
       default:
-        print_help.helpMessage("Error: Module '" ~ mod ~ "' not recognized.");
-        break;
-        }
+        print_help.helpMessage("Error: Operation '" ~ mod ~ "' not recognized.");
+        return 1;
     }
+  }
+  return 0;
 }
