@@ -1,5 +1,8 @@
 module arg_parser;
 
+import print_help;
+import core.stdc.stdlib;
+
 /** Option represent a command line argument for the command 
     which modifies the behaviour of the application itself.
     The Option specification has no consciusness of the 
@@ -136,6 +139,8 @@ private immutable(Option*) searchOption(string option) {
       return &options[i];
     }
   }
+  print_help.helpMessage("Error: specified option '" ~ option ~ "' not recognized.");
+  exit(1);
   return null;
 }
 
@@ -143,41 +148,52 @@ private immutable(Option*) searchOption(string option) {
     Parses the input argument list and divides it into the main argument, 
     if present, and the potential options.
 */
-void parseArguments(in string[] args, out string mainArg, out RuntimeOption[] activeOptions) {
+void parseArguments(in string[] args, out string operation, out string mainArg, out RuntimeOption[] activeOptions) {
   for (int i = 0; i < args.length; i++) {
     if (args[i][0..1] == "-" || args[i][0..2] == "--") {
       immutable(Option*) opt = searchOption(args[i]);
-      if (opt != null) {
-        if (opt.needArgument) {
-          /** args.length will never be less or equal to 0, 
-              as in that case the outer for is never entered.
-              So in the following assertion there is no problem
-              related to subtracting 1 to an unsigned value.
-          */
-          assert(i < (args.length - 1), "Last option required an argument, but argument list has finished.");
-          string extraArgument = args[i+1];
-          activeOptions ~= [RuntimeOption(opt, extraArgument)];
-          i++;
-        } else {
-          activeOptions ~= [RuntimeOption(opt)];
-        }
+      assert(opt != null, "parseArgument.opt should not be null in this point!");
+      if (opt.needArgument) {
+        /** args.length will never be less or equal to 0, 
+            as in that case the outer for is never entered.
+            So in the following assertion there is no problem
+            related to subtracting 1 to an unsigned value.
+        */
+        assert(i < (args.length - 1), "Last option required an argument, but argument list has finished.");
+        string extraArgument = args[i+1];
+        activeOptions ~= [RuntimeOption(opt, extraArgument)];
+        i++;
+      } else {
+        activeOptions ~= [RuntimeOption(opt)];
       }
     } else {
-      /** Only the first main argument is parsed.
-          Subsequent arguments will be ignored.
+      /** The first non-option argument is the operation chosen. 
+          The other non-option arguments are treated as argument 
+          for the operation itself.
       */
-      if (mainArg == null) {        
-        mainArg = args[i];
+      if (operation == null) {
+        operation = args[i];
+      } else {
+        /** Only the first main argument is parsed.
+            Subsequent arguments will be ignored.
+        */
+        if (mainArg == null) {        
+          mainArg = args[i];
+        }
       }
     }
   }
 }
 
 unittest {
-  string[] args = ["--help", "file"];
+  string op = "apply";
+  string[] optionArgs = ["--help"];
+  string[] mainArgs = ["file"];
   string mainArgument;
+  string operation;
   RuntimeOption[] runtimeOptions;
-  parseArguments(args, mainArgument, runtimeOptions);
+  parseArguments(op ~ optionArgs ~ mainArgs, operation, mainArgument, runtimeOptions);
+  assert(operation == "apply");
   assert(mainArgument == "file");
-  assert(runtimeOptions.length == 1);
+  assert(runtimeOptions.length == optionArgs.length);
 }
