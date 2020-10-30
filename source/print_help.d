@@ -3,12 +3,14 @@ module print_help;
 import std.stdio;
 import arg_parser;
 
+private immutable string VERSION = "0.1.0";
+
 /** Prints help message.
     parameters:
     - message: message to display before the help message. 
                If empty nothing is displayed.
 */
-void printHelp(in string message = "") {
+void helpMessage(in string message = "") {
   if (message.length != 0) {
       writeln(message);
   }
@@ -29,4 +31,11 @@ void printHelp(in string message = "") {
   }
   
   writeln(helpString);
+}
+
+/**
+    Prints version message.
+*/
+void versionMessage() {
+  writeln("Current version: ", VERSION);
 }
