@@ -2,6 +2,7 @@ module main;
 
 import std.stdio;
 import apply;
+import arg_parser;
 
 void main(string[] args) {
     args = args[1..$];
@@ -26,16 +27,24 @@ void main(string[] args) {
                If empty nothing is displayed.
 */
 private void printHelp(string message = "") {
-    if (message.length != 0) {
-        writeln(message);
-    }
-    writeln(
-    `Usage: git-update <module> [path/to/Gitfile] [options]`, "\n",
-    "\n",
-    `Modules:`, "\n",
-    `  - apply => applies the gitfile configuration of repositories`, "\n",
-    "\n",
-    `Options:`, "\n",
-    `  No option are available yet.`
-    );
+  if (message.length != 0) {
+      writeln(message);
+  }
+  // TODO: prettify help string
+  string helpString =
+    `Usage: git-update <module> [path/to/Gitfile] [options]` ~ "\n" ~
+    "\n" ~
+    `Modules:` ~ "\n" ~
+    `  - apply => applies the gitfile configuration of repositories` ~ "\n" ~
+    "\n";
+
+  helpString ~=
+    `Options:` ~ "\n"
+  ;
+  foreach (opt; arg_parser.options)
+  {
+    helpString ~= `  ` ~ opt.shortVersion ~ `, ` ~ opt.longVersion ~ `  ` ~ opt.description ~ "\n";
+  }
+  
+  writeln(helpString);
 }
