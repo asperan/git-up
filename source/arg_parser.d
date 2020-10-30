@@ -159,7 +159,7 @@ void parseArguments(in string[] args, out string operation, out string mainArg, 
             So in the following assertion there is no problem
             related to subtracting 1 to an unsigned value.
         */
-        assert(i < (args.length - 1), "Last option required an argument, but argument list has finished.");
+        assert(i < (args.length - 1), "Last option required an argument, but argument list has finished."); // @suppress(dscanner.suspicious.length_subtraction)
         string extraArgument = args[i+1];
         activeOptions ~= [RuntimeOption(opt, extraArgument)];
         i++;
