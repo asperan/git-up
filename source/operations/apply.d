@@ -45,7 +45,6 @@ private LocalRepository buildRepoInfo(in Node currentRepository, in int repoInde
   TreeReferenceType referenceType;
   string referenceTypeString;
   getReferenceType(currentRepository, repoIndex, referenceType, referenceTypeString);
-  // TODO: Check existance of install script if specified.
   string installScriptPath;
   if ("installScript" in currentRepository) {
     installScriptPath = parseFilePath(currentRepository["installScript"].as!string);
