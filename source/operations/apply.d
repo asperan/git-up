@@ -81,7 +81,8 @@ private bool hasAllMandatoryKeys(in Node repoNode) {
     missingKeys ~= "commit/tag";
   }
   if (missingKeys.length > 0) {
-    printParsingErrorAndExit("The following keys are mandatory and are missing from the Gitfile: " ~ missingKeys.join(", "));
+    printParsingErrorAndExit("The following keys are mandatory and are missing from the Gitfile: " 
+                              ~ missingKeys.join(", "));
     return false;
   } else {
     return true;
