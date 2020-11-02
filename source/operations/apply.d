@@ -30,19 +30,25 @@ private void loadFile(in string filePath, out bool[string] fileOptions, out Loca
     writeln("Option '" ~ key ~ "' has value '" ~ value ~ "'.");
   }
   for (int i = 0; i < root["Repositories"].length; i++ ) {
-    assert(hasAllMandatoryKeys(root["Repositories"][i]));
-    writeln("Fetching repository '" ~ root["Repositories"][i]["host"].as!string ~ "/" ~ root["Repositories"][i]["author"].as!string ~ "/" ~ root["Repositories"][i]["name"].as!string ~ "'");
+    Node currentRepository = root["Repositories"][i];
+    assert(hasAllMandatoryKeys(currentRepository));
+    writeln("Fetching repository '" ~ currentRepository["host"].as!string ~ "/" ~ currentRepository["author"].as!string ~ "/" ~ currentRepository["name"].as!string ~ "'");
     TreeReferenceType referenceType;
     string referenceTypeString;
-    getReferenceType(root["Repositories"][i], referenceType, referenceTypeString);
+    getReferenceType(currentRepository, referenceType, referenceTypeString);
     // TODO: Check existance of install script if specified.
-    string installScriptPath = "";
-    LocalRepository LR = LocalRepository( root["Repositories"][i]["host"].as!string, 
-                                          root["Repositories"][i]["author"].as!string, 
-                                          root["Repositories"][i]["name"].as!string, 
-                                          root["Repositories"][i]["localPath"].as!string, 
+    string installScriptPath;
+    if ("installScript" in currentRepository) {
+      installScriptPath = currentRepository["installScript"].as!string;
+    } else {
+      installScriptPath = "";
+    }
+    LocalRepository LR = LocalRepository( currentRepository["host"].as!string, 
+                                          currentRepository["author"].as!string, 
+                                          currentRepository["name"].as!string, 
+                                          currentRepository["localPath"].as!string, 
                                           referenceType,
-                                          root["Repositories"][i][referenceTypeString].as!string, 
+                                          currentRepository[referenceTypeString].as!string, 
                                           installScriptPath);        
   }
 }
@@ -65,19 +71,19 @@ private string parseFilePath(in string filePath) {
 
 private bool hasAllMandatoryKeys(in Node repoNode) {
   string[] missingKeys;
-  if ( ("host" !in repoNode) ) {
+  if ("host" !in repoNode) {
     missingKeys ~= "host";
   }
-  if ( ("author" !in repoNode) ) {
+  if ("author" !in repoNode) {
     missingKeys ~= "author";
   }
-  if ( ("name" !in repoNode) ) {
+  if ("name" !in repoNode) {
     missingKeys ~= "name";
   }
-  if ( ("localPath" !in repoNode) ) {
+  if ("localPath" !in repoNode) {
     missingKeys ~= "localPath";
   }
-  if ( ("commit" !in repoNode) && ("tag" !in repoNode) ) {
+  if (("commit" !in repoNode) && ("tag" !in repoNode)) {
     missingKeys ~= "commit/tag";
   }
   if (missingKeys.length > 0) {
