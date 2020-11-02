@@ -108,7 +108,7 @@ private bool hasAllMandatoryKeys(in Node repoNode) {
   }
   if (missingKeys.length > 0) {
     printParsingErrorAndExit("The following keys are mandatory and are missing from the Gitfile: " 
-                              ~ missingKeys.join(", "));
+                              ~ missingKeys.join(", ") ~ ".");
     return false;
   } else {
     return true;
