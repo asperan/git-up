@@ -37,7 +37,7 @@ private void loadFile(in string filePath, out bool[string] fileOptions, out Loca
 
 private LocalRepository buildRepoInfo(in Node currentRepository) {
   assert(currentRepository.hasAllMandatoryKeys());
-  // assert there are not both 'commit' and 'tag'
+  assert(currentRepository.hasNoRefTypeConflict());
   writeln("Fetching repository '" 
           ~ currentRepository["host"].as!string ~ "/" 
           ~ currentRepository["author"].as!string ~ "/" 
@@ -48,7 +48,10 @@ private LocalRepository buildRepoInfo(in Node currentRepository) {
   // TODO: Check existance of install script if specified.
   string installScriptPath;
   if ("installScript" in currentRepository) {
-    installScriptPath = currentRepository["installScript"].as!string;
+    installScriptPath = parseFilePath(currentRepository["installScript"].as!string);
+    if (!exists(installScriptPath)) {
+      printParsingErrorAndExit("Specified install script does not exist.");
+    }
   } else {
     installScriptPath = "";
   }
@@ -74,6 +77,15 @@ private string parseFilePath(in string filePath) {
     return filePath;
   } else { // Relative path, prepend the current directory
     return getcwd() ~ "/" ~ filePath;
+  }
+}
+
+private bool hasNoRefTypeConflict(in Node repoNode) {
+  if ("commit" in repoNode && "tag" in repoNode) {
+    printParsingErrorAndExit("Keys 'commit' and 'tag' cannot be used together.");
+    return false;
+  } else {
+    return true;
   }
 }
 
