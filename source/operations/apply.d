@@ -24,33 +24,41 @@ private void loadFile(in string filePath, out bool[string] fileOptions, out Loca
     printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' does not exist.");
   }
   Node root = Loader.fromFile(parsedFilePath).load();
+  // TODO: manage options
   foreach (string key, string value ; root["GlobalOptions"])
   {
     // parse value to boolean
     writeln("Option '" ~ key ~ "' has value '" ~ value ~ "'.");
   }
   for (int i = 0; i < root["Repositories"].length; i++ ) {
-    Node currentRepository = root["Repositories"][i];
-    assert(hasAllMandatoryKeys(currentRepository));
-    writeln("Fetching repository '" ~ currentRepository["host"].as!string ~ "/" ~ currentRepository["author"].as!string ~ "/" ~ currentRepository["name"].as!string ~ "'");
-    TreeReferenceType referenceType;
-    string referenceTypeString;
-    getReferenceType(currentRepository, referenceType, referenceTypeString);
-    // TODO: Check existance of install script if specified.
-    string installScriptPath;
-    if ("installScript" in currentRepository) {
-      installScriptPath = currentRepository["installScript"].as!string;
-    } else {
-      installScriptPath = "";
-    }
-    LocalRepository LR = LocalRepository( currentRepository["host"].as!string, 
-                                          currentRepository["author"].as!string, 
-                                          currentRepository["name"].as!string, 
-                                          currentRepository["localPath"].as!string, 
-                                          referenceType,
-                                          currentRepository[referenceTypeString].as!string, 
-                                          installScriptPath);        
+    repoInfo ~= buildRepoInfo(root["Repositories"][i]);
   }
+}
+
+private LocalRepository buildRepoInfo(in Node currentRepository) {
+  assert(currentRepository.hasAllMandatoryKeys());
+  // assert there are not both 'commit' and 'tag'
+  writeln("Fetching repository '" 
+          ~ currentRepository["host"].as!string ~ "/" 
+          ~ currentRepository["author"].as!string ~ "/" 
+          ~ currentRepository["name"].as!string ~ "'");
+  TreeReferenceType referenceType;
+  string referenceTypeString;
+  getReferenceType(currentRepository, referenceType, referenceTypeString);
+  // TODO: Check existance of install script if specified.
+  string installScriptPath;
+  if ("installScript" in currentRepository) {
+    installScriptPath = currentRepository["installScript"].as!string;
+  } else {
+    installScriptPath = "";
+  }
+  return LocalRepository( currentRepository["host"].as!string, 
+                          currentRepository["author"].as!string, 
+                          currentRepository["name"].as!string, 
+                          currentRepository["localPath"].as!string, 
+                          referenceType,
+                          currentRepository[referenceTypeString].as!string, 
+                          installScriptPath);
 }
 
 private void checkActionForRepo(in string repoInfo) {
@@ -95,11 +103,11 @@ private bool hasAllMandatoryKeys(in Node repoNode) {
   }
 }
 
-private void getReferenceType(in Node repoNode, out TreeReferenceType type, string typeString) {
-  if (("commit" in repoNode) != null ) {
+private void getReferenceType(in Node repoNode, out TreeReferenceType type, out string typeString) {
+  if ("commit" in repoNode) {
     type = TreeReferenceType.COMMIT;
     typeString = "commit";
-  } else if (("tag" in repoNode) != null) {
+  } else if ("tag" in repoNode) {
     type = TreeReferenceType.TAG;
     typeString = "tag";
   } else {
