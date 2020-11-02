@@ -35,9 +35,10 @@ private void loadFile(in string filePath, out bool[string] fileOptions, out Loca
   }
 }
 
-private LocalRepository buildRepoInfo(in Node currentRepository, in int repoIndex) {
-  assert(currentRepository.hasAllMandatoryKeys(repoIndex));
-  assert(currentRepository.hasNoRefTypeConflict(repoIndex));
+private LocalRepository buildRepoInfo(in Node currentRepository, in int repoIndex) 
+in (currentRepository.hasAllMandatoryKeys(repoIndex))
+in (currentRepository.hasNoRefTypeConflict(repoIndex))
+{
   writeln("Fetching repository '" 
           ~ currentRepository["host"].as!string ~ "/" 
           ~ currentRepository["author"].as!string ~ "/" 
@@ -127,10 +128,7 @@ private void getReferenceType(in Node repoNode, in int repoIndex, out TreeRefere
 }
 
 private string toShortOrdinal(int i) 
-in {
-  assert(i>0);
-}
-do
+in (i>0)
 {
   if (i >= 11 && i <= 13) { // Special cases
     return i.to!string(10) ~ "th";
