@@ -6,22 +6,28 @@ import repository;
 import core.stdc.stdlib;
 import std.conv;
 import std.array;
+import std.file;
 
 /**
     Load yaml file and apply the specified configuration.
 */
 void apply(string gitfilePath) {
   bool[string] options;
-  string repoInfo;
+  LocalRepository[] repoInfo;
   loadFile(gitfilePath, options, repoInfo);
   writefln("Searching gitfile: " ~ (gitfilePath == null ? "Gitfile" : gitfilePath ));
 }
 
-private void loadFile(in string filePath, out bool[string] fileOptions, out string repoInfo) {
-  Node root = Loader.fromFile(filePath).load();
+private void loadFile(in string filePath, out bool[string] fileOptions, out LocalRepository[] repoInfo) {
+  string parsedFilePath = parseFilePath(filePath);
+  if (!exists(parsedFilePath)) {
+    printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' does not exist.");
+  }
+  Node root = Loader.fromFile(parsedFilePath).load();
   foreach (string key, string value ; root["GlobalOptions"])
   {
-    writeln("Option '" ~ key ~ "' as value '" ~ value ~ "'.");
+    // parse value to boolean
+    writeln("Option '" ~ key ~ "' has value '" ~ value ~ "'.");
   }
   for (int i = 0; i < root["Repositories"].length; i++ ) {
     assert(hasAllMandatoryKeys(root["Repositories"][i]));
@@ -29,6 +35,7 @@ private void loadFile(in string filePath, out bool[string] fileOptions, out stri
     TreeReferenceType referenceType;
     string referenceTypeString;
     getReferenceType(root["Repositories"][i], referenceType, referenceTypeString);
+    // TODO: Check existance of install script if specified.
     string installScriptPath = "";
     LocalRepository LR = LocalRepository( root["Repositories"][i]["host"].as!string, 
                                           root["Repositories"][i]["author"].as!string, 
@@ -48,8 +55,12 @@ private void doActionForRepo(in string action, in string repoInfo) {
 
 }
 
-private string parseFilePath(in string localPath) {
-  return null;
+private string parseFilePath(in string filePath) {
+  if (filePath[0..1] == "/") { // Absolute path, no transformation needed
+    return filePath;
+  } else { // Relative path, prepend the current directory
+    return getcwd() ~ "/" ~ filePath;
+  }
 }
 
 private bool hasAllMandatoryKeys(in Node repoNode) {
