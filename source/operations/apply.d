@@ -31,26 +31,26 @@ private void loadFile(in string filePath, out bool[string] fileOptions, out Loca
     writeln("Option '" ~ key ~ "' has value '" ~ value ~ "'.");
   }
   for (int i = 0; i < root["Repositories"].length; i++ ) {
-    repoInfo ~= buildRepoInfo(root["Repositories"][i]);
+    repoInfo ~= buildRepoInfo(root["Repositories"][i], i + 1);
   }
 }
 
-private LocalRepository buildRepoInfo(in Node currentRepository) {
-  assert(currentRepository.hasAllMandatoryKeys());
-  assert(currentRepository.hasNoRefTypeConflict());
+private LocalRepository buildRepoInfo(in Node currentRepository, in int repoIndex) {
+  assert(currentRepository.hasAllMandatoryKeys(repoIndex));
+  assert(currentRepository.hasNoRefTypeConflict(repoIndex));
   writeln("Fetching repository '" 
           ~ currentRepository["host"].as!string ~ "/" 
           ~ currentRepository["author"].as!string ~ "/" 
           ~ currentRepository["name"].as!string ~ "'");
   TreeReferenceType referenceType;
   string referenceTypeString;
-  getReferenceType(currentRepository, referenceType, referenceTypeString);
+  getReferenceType(currentRepository, repoIndex, referenceType, referenceTypeString);
   // TODO: Check existance of install script if specified.
   string installScriptPath;
   if ("installScript" in currentRepository) {
     installScriptPath = parseFilePath(currentRepository["installScript"].as!string);
     if (!exists(installScriptPath)) {
-      printParsingErrorAndExit("Specified install script does not exist.");
+      printParsingErrorAndExit("Specified install script does not exist.", repoIndex);
     }
   } else {
     installScriptPath = "";
@@ -80,16 +80,16 @@ private string parseFilePath(in string filePath) {
   }
 }
 
-private bool hasNoRefTypeConflict(in Node repoNode) {
+private bool hasNoRefTypeConflict(in Node repoNode, in int repoIndex) {
   if ("commit" in repoNode && "tag" in repoNode) {
-    printParsingErrorAndExit("Keys 'commit' and 'tag' cannot be used together.");
+    printParsingErrorAndExit("Keys 'commit' and 'tag' cannot be used together.", repoIndex);
     return false;
   } else {
     return true;
   }
 }
 
-private bool hasAllMandatoryKeys(in Node repoNode) {
+private bool hasAllMandatoryKeys(in Node repoNode, in int repoIndex) {
   string[] missingKeys;
   if ("host" !in repoNode) {
     missingKeys ~= "host";
@@ -108,14 +108,14 @@ private bool hasAllMandatoryKeys(in Node repoNode) {
   }
   if (missingKeys.length > 0) {
     printParsingErrorAndExit("The following keys are mandatory and are missing from the Gitfile: " 
-                              ~ missingKeys.join(", ") ~ ".");
+                              ~ missingKeys.join(", ") ~ ".", repoIndex);
     return false;
   } else {
     return true;
   }
 }
 
-private void getReferenceType(in Node repoNode, out TreeReferenceType type, out string typeString) {
+private void getReferenceType(in Node repoNode, in int repoIndex, out TreeReferenceType type, out string typeString) {
   if ("commit" in repoNode) {
     type = TreeReferenceType.COMMIT;
     typeString = "commit";
@@ -123,7 +123,7 @@ private void getReferenceType(in Node repoNode, out TreeReferenceType type, out 
     type = TreeReferenceType.TAG;
     typeString = "tag";
   } else {
-    printParsingErrorAndExit("Commit/Tag reference not found. Use 'commit' or 'tag' as key for reference.");
+    printParsingErrorAndExit("Commit/Tag reference not found. Use 'commit' or 'tag' as key for reference.", repoIndex);
   }
 }
 
@@ -155,7 +155,9 @@ unittest {
   assert(22.toShortOrdinal() == "22nd");
 }
 
-private void printParsingErrorAndExit(in string errorMessage) {
-  stderr.writeln("Parsing error: " ~ errorMessage);
+private void printParsingErrorAndExit(in string errorMessage, in int repoIndex = 0) {
+  stderr.writeln("Parsing error" 
+                  ~ (repoIndex > 0 ? " @ " ~ repoIndex.toShortOrdinal() ~ " repo" : "") 
+                  ~ ": " ~ errorMessage);
   exit(1);
 }
