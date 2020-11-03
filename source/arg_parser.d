@@ -183,6 +183,9 @@ void parseArguments(in string[] args, out string operation, out string mainArg, 
       }
     }
   }
+  if (mainArg == null) { // If not specified, it defaults to 'Gitfile' in the current directory
+    mainArg = "Gitfile";
+  }
 }
 
 unittest {
