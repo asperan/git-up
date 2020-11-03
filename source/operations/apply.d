@@ -29,16 +29,16 @@ private void loadFile(in string filePath, out bool[string] fileOptions, out Loca
   foreach (string key, string value ; root["GlobalOptions"])
   {
     // parse value to boolean
-    writeln("Option '" ~ key ~ "' has value '" ~ value ~ "'.");
+    writeln("Option '" ~ key ~ "' has value '" ~ value.parseBooleanLiteral(key).to!string ~ "'.");
   }
   for (int i = 0; i < root["Repositories"].length; i++ ) {
-    repoInfo ~= buildRepoInfo(root["Repositories"][i], i + 1);
+    repoInfo ~= buildRepoInfo(root["Repositories"][i], " @ " ~ toShortOrdinal(i + 1) ~ " repository");
   }
 }
 
-private LocalRepository buildRepoInfo(in Node currentRepository, in int repoIndex) 
-in (currentRepository.hasAllMandatoryKeys(repoIndex))
-in (currentRepository.hasNoRefTypeConflict(repoIndex))
+private LocalRepository buildRepoInfo(in Node currentRepository, in string errorPosition) 
+in (currentRepository.hasAllMandatoryKeys(errorPosition))
+in (currentRepository.hasNoRefTypeConflict(errorPosition))
 {
   writeln("Fetching repository '" 
           ~ currentRepository["host"].as!string ~ "/" 
@@ -46,12 +46,12 @@ in (currentRepository.hasNoRefTypeConflict(repoIndex))
           ~ currentRepository["name"].as!string ~ "'");
   TreeReferenceType referenceType;
   string referenceTypeString;
-  getReferenceType(currentRepository, repoIndex, referenceType, referenceTypeString);
+  getReferenceType(currentRepository, errorPosition, referenceType, referenceTypeString);
   string installScriptPath;
   if ("installScript" in currentRepository) {
     installScriptPath = parseFilePath(currentRepository["installScript"].as!string);
     if (!exists(installScriptPath)) {
-      printParsingErrorAndExit("Specified install script does not exist.", repoIndex);
+      printParsingErrorAndExit("Specified install script does not exist.", errorPosition);
     }
   } else {
     installScriptPath = "";
@@ -81,16 +81,16 @@ private string parseFilePath(in string filePath) {
   }
 }
 
-private bool hasNoRefTypeConflict(in Node repoNode, in int repoIndex) {
+private bool hasNoRefTypeConflict(in Node repoNode, in string errorPosition) {
   if ("commit" in repoNode && "tag" in repoNode) {
-    printParsingErrorAndExit("Keys 'commit' and 'tag' cannot be used together.", repoIndex);
+    printParsingErrorAndExit("Keys 'commit' and 'tag' cannot be used together.", errorPosition);
     return false;
   } else {
     return true;
   }
 }
 
-private bool hasAllMandatoryKeys(in Node repoNode, in int repoIndex) {
+private bool hasAllMandatoryKeys(in Node repoNode, in string errorPosition) {
   string[] missingKeys;
   if ("host" !in repoNode) {
     missingKeys ~= "host";
@@ -109,14 +109,17 @@ private bool hasAllMandatoryKeys(in Node repoNode, in int repoIndex) {
   }
   if (missingKeys.length > 0) {
     printParsingErrorAndExit("The following keys are mandatory and are missing from the Gitfile: " 
-                              ~ missingKeys.join(", ") ~ ".", repoIndex);
+                              ~ missingKeys.join(", ") ~ ".", errorPosition);
     return false;
   } else {
     return true;
   }
 }
 
-private void getReferenceType(in Node repoNode, in int repoIndex, out TreeReferenceType type, out string typeString) {
+private void getReferenceType(in Node repoNode, 
+                              in string errorPosition, 
+                              out TreeReferenceType type, 
+                              out string typeString) {
   if ("commit" in repoNode) {
     type = TreeReferenceType.COMMIT;
     typeString = "commit";
@@ -124,7 +127,8 @@ private void getReferenceType(in Node repoNode, in int repoIndex, out TreeRefere
     type = TreeReferenceType.TAG;
     typeString = "tag";
   } else {
-    printParsingErrorAndExit("Commit/Tag reference not found. Use 'commit' or 'tag' as key for reference.", repoIndex);
+    printParsingErrorAndExit("Commit/Tag reference not found. Use 'commit' or 'tag' as key for reference.", 
+                              errorPosition);
   }
 }
 
@@ -153,14 +157,14 @@ unittest {
   assert(22.toShortOrdinal() == "22nd");
 }
 
-private void printParsingErrorAndExit(in string errorMessage, in int repoIndex = 0) {
+private void printParsingErrorAndExit(in string errorMessage, in string additionalInfo = "") {
   stderr.writeln("Parsing error" 
-                  ~ (repoIndex > 0 ? " @ " ~ repoIndex.toShortOrdinal() ~ " repo" : "") 
+                  ~ additionalInfo
                   ~ ": " ~ errorMessage);
   exit(1);
 }
 
-private bool parseBooleanLiteral(in string input) {
+private bool parseBooleanLiteral(in string input, in string optionName) {
   switch (input.toLower()) {
     case "y":
     case "yes":
@@ -173,7 +177,7 @@ private bool parseBooleanLiteral(in string input) {
     case "off":
       return false;
     default:
-      printParsingErrorAndExit("Value '" ~ input ~  "' cannot be parsed into a boolean.");
+      printParsingErrorAndExit("Value '" ~ input ~  "' cannot be parsed into a boolean.", " @ option " ~ optionName );
       assert(0);
   }
 }
