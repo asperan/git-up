@@ -46,3 +46,10 @@ string parseFilePath(in string filePath) {
     return getcwd() ~ "/" ~ filePath;
   }
 }
+
+/** Parsable element with a name. */
+interface NamedParsable
+{
+  /** Returns the name of the parsable object. */
+  string name();
+}
