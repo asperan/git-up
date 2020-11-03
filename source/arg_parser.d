@@ -161,10 +161,10 @@ void parseArguments(in string[] args, out string operation, out string mainArg, 
         */
         assert(i < (args.length - 1), "Last option required an argument, but argument list has finished."); // @suppress(dscanner.suspicious.length_subtraction)
         string extraArgument = args[i+1];
-        activeOptions ~= [RuntimeOption(opt, extraArgument)];
+        activeOptions ~= RuntimeOption(opt, extraArgument);
         i++;
       } else {
-        activeOptions ~= [RuntimeOption(opt)];
+        activeOptions ~= RuntimeOption(opt);
       }
     } else {
       /** The first non-option argument is the operation chosen. 
