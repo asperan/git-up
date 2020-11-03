@@ -25,9 +25,11 @@ void loadFile(in string filePath, out bool[string] fileOptions, out LocalReposit
   {
     writeln("Option '" ~ key ~ "' has value '" ~ value.parseBooleanLiteral(key).to!string ~ "'.");
   }
+  // TODO: check option uniqueness
   for (int i = 0; i < root["Repositories"].length; i++ ) {
     repoInfo ~= buildRepoInfo(root["Repositories"][i], " @ " ~ toShortOrdinal(i + 1) ~ " repository");
   }
+  assertValueUniqueness!(LocalRepository)(repoInfo, "Repositories");
   // TODO: check repositories are unique within the file
 }
 
@@ -51,13 +53,13 @@ in (currentRepository.hasNoRefTypeConflict(errorPosition))
   } else {
     installScriptPath = "";
   }
-  return LocalRepository( currentRepository["host"].as!string, 
-                          currentRepository["author"].as!string, 
-                          currentRepository["name"].as!string, 
-                          currentRepository["localPath"].as!string, 
-                          referenceType,
-                          currentRepository[referenceTypeString].as!string, 
-                          installScriptPath);
+  return new LocalRepository( currentRepository["host"].as!string, 
+                              currentRepository["author"].as!string, 
+                              currentRepository["name"].as!string, 
+                              currentRepository["localPath"].as!string, 
+                              referenceType,
+                              currentRepository[referenceTypeString].as!string, 
+                              installScriptPath);
 }
 
 private bool hasNoRefTypeConflict(in Node repoNode, in string errorPosition) {
@@ -71,19 +73,20 @@ private bool hasNoRefTypeConflict(in Node repoNode, in string errorPosition) {
 
 private bool hasAllMandatoryKeys(in Node repoNode, in string errorPosition) {
   string[] missingKeys;
-  if ("host" !in repoNode) {
+  if ("host" !in repoNode || repoNode["host"].type == NodeType.null_) {
     missingKeys ~= "host";
   }
-  if ("author" !in repoNode) {
+  if ("author" !in repoNode || repoNode["author"].type == NodeType.null_) {
     missingKeys ~= "author";
   }
-  if ("name" !in repoNode) {
+  if ("name" !in repoNode || repoNode["name"].type == NodeType.null_) {
     missingKeys ~= "name";
   }
-  if ("localPath" !in repoNode) {
+  if ("localPath" !in repoNode || repoNode["localPath"].type == NodeType.null_) {
     missingKeys ~= "localPath";
   }
-  if (("commit" !in repoNode) && ("tag" !in repoNode)) {
+  if (("commit" !in repoNode || repoNode["commit"].type == NodeType.null_) 
+    && ("tag" !in repoNode || repoNode["tag"].type == NodeType.null_)) {
     missingKeys ~= "commit/tag";
   }
   if (missingKeys.length > 0) {
@@ -134,4 +137,17 @@ unittest {
   assert(1.toShortOrdinal() == "1st");
   assert(11.toShortOrdinal() == "11th");
   assert(22.toShortOrdinal() == "22nd");
+}
+
+private void assertValueUniqueness(T : NamedParsable) (in T[] values, in string valuesName) 
+{
+  if (values.length > 0) {
+    for (int i = 0; i < values.length - 1; i++) { // @suppress(dscanner.suspicious.length_subtraction)
+      for (int j = 1; j < values.length; j++) {
+        if (values[i] == values[j]) {
+          printParsingErrorAndExit("Duplicate value '" ~ values[i].name() ~ "' found. Aborting.", " @ " ~ valuesName);
+        }
+      }
+    }
+  }
 }
