@@ -28,12 +28,12 @@ private void loadFile(in string filePath, out bool[string] fileOptions, out Loca
   // TODO: manage options
   foreach (string key, string value ; root["GlobalOptions"])
   {
-    // parse value to boolean
     writeln("Option '" ~ key ~ "' has value '" ~ value.parseBooleanLiteral(key).to!string ~ "'.");
   }
   for (int i = 0; i < root["Repositories"].length; i++ ) {
     repoInfo ~= buildRepoInfo(root["Repositories"][i], " @ " ~ toShortOrdinal(i + 1) ~ " repository");
   }
+  // TODO: check repositories are unique within the file
 }
 
 private LocalRepository buildRepoInfo(in Node currentRepository, in string errorPosition) 
