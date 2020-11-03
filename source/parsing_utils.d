@@ -5,12 +5,17 @@ import core.stdc.stdlib;
 import std.string;
 import std.file;
 
-
+/**
+    Prints an error, with optional additional information and exit the program with an error state.
+*/
 void printParsingErrorAndExit(in string errorMessage, in string additionalInfo = "") {
   stderr.writeln("Parsing error" ~ additionalInfo ~ ": " ~ errorMessage);
   exit(1);
 }
 
+/**
+    Parses a YAML-compliant boolean literal into its bool value.
+*/
 bool parseBooleanLiteral(in string input, in string optionName) {
   switch (input.toLower()) {
     case "y":
@@ -29,6 +34,11 @@ bool parseBooleanLiteral(in string input, in string optionName) {
   }
 }
 
+/**
+    Manages file paths to transform the into absolute paths.
+    If the path is already absolute, nothing is changed;
+    else the current working directory is prepended to the provided path.
+*/
 string parseFilePath(in string filePath) {
   if (filePath[0..1] == "/") { // Absolute path, no transformation needed
     return filePath;
