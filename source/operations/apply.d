@@ -7,6 +7,7 @@ import core.stdc.stdlib;
 import std.conv;
 import std.array;
 import std.file;
+import std.uni;
 
 /**
     Load yaml file and apply the specified configuration.
@@ -157,4 +158,22 @@ private void printParsingErrorAndExit(in string errorMessage, in int repoIndex =
                   ~ (repoIndex > 0 ? " @ " ~ repoIndex.toShortOrdinal() ~ " repo" : "") 
                   ~ ": " ~ errorMessage);
   exit(1);
+}
+
+private bool parseBooleanLiteral(in string input) {
+  switch (input.toLower()) {
+    case "y":
+    case "yes":
+    case "true":
+    case "on":
+      return true;
+    case "n":
+    case "no":
+    case "false":
+    case "off":
+      return false;
+    default:
+      printParsingErrorAndExit("Value '" ~ input ~  "' cannot be parsed into a boolean.");
+      assert(0);
+  }
 }
