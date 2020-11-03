@@ -46,30 +46,36 @@ unittest {
 */
 struct FileOption {
   private:
-    string name;
-    ArgumentType argType;
+    string p_name;
+    ArgumentType p_argType;
   
     this(in string name, in ArgumentType argType)
     in(name != null && name != "")
     {
-      this.name = name;
-      this.argType = argType;
+      p_name = name;
+      p_argType = argType;
     }
 
     bool opEquals(FileOption)(const FileOption other) const
     {
-      return this.name == other.name;
+      return p_name == other.name;
     }
 
     bool opEquals(const string other) const
     {
-      return this.name == other;
+      return p_name == other;
     }
 
     size_t toHash() const @safe pure nothrow
     {
-      return name.hashOf();
+      return p_name.hashOf();
     }
+
+  public:
+    /** Returns the name of the option. */
+    string name() const { return p_name; }
+    /** Returns the argument type. */
+    ArgumentType argType() const { return p_argType; }
 }
 
 unittest {
@@ -130,12 +136,13 @@ class RuntimeFileOption : NamedParsable {
     string argString() const in(fileOption.argType == ArgumentType.STRING) { return argument.p_str; }
 }
 
+/** Searches an option by name in the array of all options. */
 immutable(FileOption*) searchFileOption(in string name) {
   for (int i = 0; i < fileOptions.length; i++) {
     if (fileOptions[i] == name) {
       return &fileOptions[i];
     }
   }
-  printParsingErrorAndExit("Option " ~ name ~ " not recognized.");
+  printParsingErrorAndExit("Option '" ~ name ~ "' not recognized.");
   return null;
 }
