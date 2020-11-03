@@ -60,14 +60,6 @@ in (currentRepository.hasNoRefTypeConflict(errorPosition))
                           installScriptPath);
 }
 
-private string parseFilePath(in string filePath) {
-  if (filePath[0..1] == "/") { // Absolute path, no transformation needed
-    return filePath;
-  } else { // Relative path, prepend the current directory
-    return getcwd() ~ "/" ~ filePath;
-  }
-}
-
 private bool hasNoRefTypeConflict(in Node repoNode, in string errorPosition) {
   if ("commit" in repoNode && "tag" in repoNode) {
     printParsingErrorAndExit("Keys 'commit' and 'tag' cannot be used together.", errorPosition);
@@ -164,5 +156,13 @@ private bool parseBooleanLiteral(in string input, in string optionName) {
     default:
       printParsingErrorAndExit("Value '" ~ input ~  "' cannot be parsed into a boolean.", " @ option " ~ optionName );
       assert(0);
+  }
+}
+
+private string parseFilePath(in string filePath) {
+  if (filePath[0..1] == "/") { // Absolute path, no transformation needed
+    return filePath;
+  } else { // Relative path, prepend the current directory
+    return getcwd() ~ "/" ~ filePath;
   }
 }
