@@ -56,6 +56,15 @@ struct LocalRepository {
       this.installScriptPath = installScriptPath;
     }
 
+    size_t toHash() const @safe pure nothrow
+    {
+      return host.hashOf(author.hashOf(name.hashOf(localPath.hashOf())));
+    }
+
+    bool opEquals(LocalRepository)(const LocalRepository other) const
+    {
+        return host == other.host && author == other.author && name == other.name && localPath == other.localPath;
+    }
 }
 
 unittest {
