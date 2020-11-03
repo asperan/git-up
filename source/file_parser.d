@@ -8,29 +8,28 @@ import std.uni;
 
 import repository;
 import parsing_utils;
+import file_option;
 import dyaml;
 
 /**
     Loads Gitfile if it exists.
     Parses options and repository informations.
 */
-void loadFile(in string filePath, out bool[string] fileOptions, out LocalRepository[] repoInfo) {
+void loadFile(in string filePath, out RuntimeFileOption[] fileOptions, out LocalRepository[] repoInfo) {
   string parsedFilePath = parseFilePath(filePath);
   if (!exists(parsedFilePath)) {
     printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' does not exist.");
   }
   Node root = Loader.fromFile(parsedFilePath).load();
-  // TODO: manage options
   foreach (string key, string value ; root["GlobalOptions"])
   {
-    writeln("Option '" ~ key ~ "' has value '" ~ value.parseBooleanLiteral(key).to!string ~ "'.");
+    fileOptions ~= buildFileOption(key, value);
   }
-  // TODO: check option uniqueness
+  assertValueUniqueness!(RuntimeFileOption)(fileOptions, "GlobalOptions");
   for (int i = 0; i < root["Repositories"].length; i++ ) {
     repoInfo ~= buildRepoInfo(root["Repositories"][i], " @ " ~ toShortOrdinal(i + 1) ~ " repository");
   }
   assertValueUniqueness!(LocalRepository)(repoInfo, "Repositories");
-  // TODO: check repositories are unique within the file
 }
 
 private LocalRepository buildRepoInfo(in Node currentRepository, in string errorPosition) 
@@ -148,6 +147,27 @@ private void assertValueUniqueness(T : NamedParsable) (in T[] values, in string 
           printParsingErrorAndExit("Duplicate value '" ~ values[i].name() ~ "' found. Aborting.", " @ " ~ valuesName);
         }
       }
+    }
+  }
+}
+
+private RuntimeFileOption buildFileOption(in string key, in string value)
+in (key.length > 0)
+in (value.length > 0) 
+{
+  immutable FileOption* fo = searchFileOption(key);
+  assert(fo, "This FileOptions should not be null!");
+  if (value == "null") {
+    printParsingErrorAndExit("'null' value passed to option '" ~ key ~ "'.");
+    return null;
+  } else {
+    final switch (fo.argType()) {
+      case ArgumentType.BOOL:
+        return new RuntimeFileOption(fo, value.parseBooleanLiteral(key));
+      case ArgumentType.INT:
+        return new RuntimeFileOption(fo, 0);
+      case ArgumentType.STRING:
+        return new RuntimeFileOption(fo, value);
     }
   }
 }
