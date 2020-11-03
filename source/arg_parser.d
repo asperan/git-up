@@ -70,7 +70,7 @@ struct Option {
  *  The options array contains all 
  *  the available options for git-update.
  */
-shared immutable(immutable(Option))[] options  = [
+shared immutable(immutable(Option)[]) options  = [
   Option("-h", "--help", "Show help panel and exit.", false, true),
   Option("-v", "--version", "Show program version and exit.", false, true)
 ];
@@ -108,7 +108,7 @@ struct RuntimeOption {
     in
     {
       assert((*option).needArgument == (optionArgument.length > 0), 
-             "Not needed argument passed to RuntimeOption of " ~ (*option).longVersion);
+             "Not needed argument passed to RuntimeOption " ~ (*option).longVersion);
     }
     do
     {
