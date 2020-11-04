@@ -68,7 +68,22 @@ class LocalRepository : NamedParsable {
       return fullName;
     }
 
-
+    /** Return the host. */
+    string host() const { return p_host; }
+    /** Return the author. */
+    string author() const { return p_author; }
+    /** Return the name. */
+    string name() const { return p_name; }
+    /** Return the local path. */
+    string localPath() const { return p_localPath; }
+    /** Return the tree reference type. */
+    TreeReferenceType refType() const { return p_refType; }
+    /** Return the tree reference. */
+    string treeReference() const { return p_treeReference; }
+    /** Return the branch. */
+    string branch() const { return p_branch; }
+    /** Return the install script path. */
+    string installScriptPath() const { return p_installScriptPath; }
 
     override size_t toHash() const @safe pure nothrow
     {
