@@ -1,10 +1,6 @@
 module file_parser;
 
-import std.file;
 import std.stdio;
-import std.conv;
-import std.array;
-import std.uni;
 import std.regex;
 
 import repository;
@@ -17,6 +13,7 @@ import dyaml;
     Parses options and repository informations.
 */
 void loadFile(in string filePath, out RuntimeFileOption[] fileOptions, out LocalRepository[] repoInfo) {
+  import std.file : exists;
   string parsedFilePath = parseFilePath(filePath);
   if (!exists(parsedFilePath)) {
     printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' does not exist.");
@@ -37,10 +34,14 @@ private LocalRepository buildRepoInfo(in Node currentRepository, in string error
 in (currentRepository.hasAllMandatoryKeys(errorPosition))
 in (currentRepository.hasNoRefTypeConflict(errorPosition))
 {
+  import std.path : isValidPath;
   writeln("Fetching repository '" 
           ~ currentRepository["host"].as!string ~ "/" 
           ~ currentRepository["author"].as!string ~ "/" 
           ~ currentRepository["name"].as!string ~ "'");
+  if (!isValidPath(currentRepository["localPath"].as!string)) {
+    printParsingErrorAndExit("Local path is not valid.", errorPosition);
+  }
   TreeReferenceType referenceType;
   string referenceString;
   string branchString;
@@ -48,8 +49,8 @@ in (currentRepository.hasNoRefTypeConflict(errorPosition))
   string installScriptPath;
   if ("installScript" in currentRepository) {
     installScriptPath = parseFilePath(currentRepository["installScript"].as!string);
-    if (!exists(installScriptPath)) {
-      printParsingErrorAndExit("Specified install script does not exist.", errorPosition);
+    if (!isValidPath(installScriptPath)) {
+      printParsingErrorAndExit("Install script path is not valid.", errorPosition);
     }
   } else {
     installScriptPath = "";
@@ -92,6 +93,7 @@ private bool hasAllMandatoryKeys(in Node repoNode, in string errorPosition) {
     missingKeys ~= "commit/tag";
   }
   if (missingKeys.length > 0) {
+    import std.array : join;
     printParsingErrorAndExit("The following keys are mandatory and are missing from the Gitfile: " 
                               ~ missingKeys.join(", ") ~ ".", errorPosition);
     return false;
@@ -109,6 +111,7 @@ private void getReferenceType(in Node repoNode,
                               out TreeReferenceType type, 
                               out string referenceString,
                               out string branchString) {
+  import std.array : array_split = split;
   if ("commit" in repoNode) {
     type = TreeReferenceType.COMMIT;
     string treeReference = repoNode["commit"].as!string;
@@ -118,7 +121,7 @@ private void getReferenceType(in Node repoNode,
       referenceString = treeReference;
       branchString = "";
     } else if (!latestMatchResult.empty() && latestMatchResult.front.hit == treeReference) { // latest-form matched
-      const string[] commitArgs = std.array.split(treeReference, " on ");
+      const string[] commitArgs = array_split(treeReference, " on ");
       referenceString = commitArgs[0];
       branchString = commitArgs.length > 1 ? commitArgs[1] : "master";
     } else {  // No matches. Error!
@@ -135,7 +138,7 @@ private void getReferenceType(in Node repoNode,
       printParsingErrorAndExit("Tag reference can only be in form '<tag name>' or '<latest>'. You should not specify the branch."); //@suppress(dscanner.style.long_line)
       assert(0);
     } else {
-      const string[] referenceArray = std.array.split(treeReference, " on ");
+      const string[] referenceArray = array_split(treeReference, " on ");
       if (referenceArray.length > 1) {
         printParsingErrorAndExit("Tag reference branch cannot be specified.");
         assert(0);
@@ -152,6 +155,7 @@ private void getReferenceType(in Node repoNode,
 private string toShortOrdinal(int i) 
 in (i>0)
 {
+  import std.conv : to;
   if (i >= 11 && i <= 13) { // Special cases
     return i.to!string(10) ~ "th";
   } else {
