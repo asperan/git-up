@@ -14,17 +14,17 @@ enum TreeReferenceType {
 */
 class LocalRepository : NamedParsable {
   private:
-    string host;
-    string author;
+    string p_host;
+    string p_author;
     string p_name;
 
-    string localPath;
+    string p_localPath;
 
-    TreeReferenceType refType;
-    string treeReference;
-    string branch;
+    TreeReferenceType p_refType;
+    string p_treeReference;
+    string p_branch;
 
-    string installScriptPath;
+    string p_installScriptPath;
 
   public:
     /**
@@ -34,52 +34,54 @@ class LocalRepository : NamedParsable {
     */
     this( string host, 
           string author, 
-          string p_name, 
+          string name, 
           string localPath, 
           TreeReferenceType treeReferenceType,
           string treeReference,
           string branch,
           string installScriptPath)
     in {
-      assert(host != "null");
+      assert(p_host != "null");
       assert(author != "null");
-      assert(p_name != "null");
+      assert(name != "null");
       assert(localPath != "null");
       assert(treeReference != "null");
       assert(branch != "null");
     } 
     do {
-      this.host = host;
-      this.author = author;
-      this.p_name = p_name;
-      this.localPath = localPath;
-      this.refType = treeReferenceType;
-      this.treeReference = treeReference;
-      this.branch = branch;
-      this.installScriptPath = installScriptPath;
+      this.p_host = host;
+      this.p_author = author;
+      this.p_name = name;
+      this.p_localPath = localPath;
+      this.p_refType = treeReferenceType;
+      this.p_treeReference = treeReference;
+      this.p_branch = branch;
+      this.p_installScriptPath = installScriptPath;
     }
 
     /** Return the full name of the repository. */
     string name() const {
       string fullName = "Repository '";
-      fullName ~= host ~ (host[host.length-1..host.length] == "/" ? "" : "/"); //@suppress(dscanner.suspicious.length_subtraction)
-      fullName ~= author ~ "/";
+      fullName ~= p_host ~ (p_host[p_host.length-1..p_host.length] == "/" ? "" : "/"); //@suppress(dscanner.suspicious.length_subtraction)
+      fullName ~= p_author ~ "/";
       fullName ~= p_name ~ "'";
       return fullName;
     }
 
+
+
     override size_t toHash() const @safe pure nothrow
     {
-      return host.hashOf(author.hashOf(p_name.hashOf(localPath.hashOf())));
+      return p_host.hashOf(p_author.hashOf(p_name.hashOf(p_localPath.hashOf())));
     }
 
     override bool opEquals(const Object other) const
     {
       if (LocalRepository o = cast(LocalRepository) other) {
-        return host == o.host 
-            && author == o.author 
+        return p_host == o.p_host 
+            && p_author == o.p_author 
             && p_name == o.p_name 
-            && localPath == o.localPath;
+            && p_localPath == o.p_localPath;
       } else {
         return false;
       }
