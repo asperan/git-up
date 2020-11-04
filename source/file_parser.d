@@ -137,14 +137,15 @@ private void getReferenceType(in Node repoNode,
     if(!latestMatchResult.empty()) {  // latest-on-branch form matched. Error!
       printParsingErrorAndExit("Tag reference can only be in form '<tag name>' or '<latest>'. You should not specify the branch."); //@suppress(dscanner.style.long_line)
       assert(0);
-    } else {
+    } else { // tag: <tag-name> ...
       const string[] referenceArray = array_split(treeReference, " on ");
-      if (referenceArray.length > 1) {
+      if (referenceArray.length > 1) { // <tag> on branch form -> invalid
         printParsingErrorAndExit("Tag reference branch cannot be specified.");
         assert(0);
+      } else { // tag: <tag-name>
+        referenceString = referenceArray[0];
+        branchString = "";
       }
-      referenceString = referenceArray[0];
-      branchString = "";
     }
   } else {
     printParsingErrorAndExit("Commit/Tag reference not found. Use 'commit' or 'tag' as key for reference.", 
