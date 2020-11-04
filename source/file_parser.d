@@ -5,6 +5,7 @@ import std.stdio;
 import std.conv;
 import std.array;
 import std.uni;
+import std.regex;
 
 import repository;
 import parsing_utils;
@@ -41,8 +42,9 @@ in (currentRepository.hasNoRefTypeConflict(errorPosition))
           ~ currentRepository["author"].as!string ~ "/" 
           ~ currentRepository["name"].as!string ~ "'");
   TreeReferenceType referenceType;
-  string referenceTypeString;
-  getReferenceType(currentRepository, errorPosition, referenceType, referenceTypeString);
+  string referenceString;
+  string branchString;
+  getReferenceType(currentRepository, errorPosition, referenceType, referenceString, branchString);
   string installScriptPath;
   if ("installScript" in currentRepository) {
     installScriptPath = parseFilePath(currentRepository["installScript"].as!string);
@@ -57,7 +59,8 @@ in (currentRepository.hasNoRefTypeConflict(errorPosition))
                               currentRepository["name"].as!string, 
                               currentRepository["localPath"].as!string, 
                               referenceType,
-                              currentRepository[referenceTypeString].as!string, 
+                              referenceString,
+                              branchString,
                               installScriptPath);
 }
 
@@ -97,16 +100,49 @@ private bool hasAllMandatoryKeys(in Node repoNode, in string errorPosition) {
   }
 }
 
+private immutable auto commitRegex = regex(`^([0-9a-f]{4,40})$`);
+private immutable auto latestBranchedRegex = 
+  regex(`^(latest)(( on )(?!\\)([^.]((?!(\.\.)|(\/\.)|(\\))([^\^\:\~\s\x00-\x1f\x7f]))*?)(?<!(\.lock)|([\/])))$`);
+
 private void getReferenceType(in Node repoNode, 
                               in string errorPosition, 
                               out TreeReferenceType type, 
-                              out string typeString) {
+                              out string referenceString,
+                              out string branchString) {
   if ("commit" in repoNode) {
     type = TreeReferenceType.COMMIT;
-    typeString = "commit";
+    string treeReference = repoNode["commit"].as!string;
+    auto shaMatchResult = treeReference.matchAll(commitRegex); // @suppress(dscanner.suspicious.unmodified)
+    auto latestMatchResult = treeReference.matchAll(latestBranchedRegex); // @suppress(dscanner.suspicious.unmodified)
+    if (!shaMatchResult.empty() && shaMatchResult.front.hit == treeReference) { // SHA-form matched
+      referenceString = treeReference;
+      branchString = "";
+    } else if (!latestMatchResult.empty() && latestMatchResult.front.hit == treeReference) { // latest-form matched
+      const string[] commitArgs = std.array.split(treeReference, " on ");
+      referenceString = commitArgs[0];
+      branchString = commitArgs.length > 1 ? commitArgs[1] : "master";
+    } else {  // No matches. Error!
+      printParsingErrorAndExit("Commit reference can be in the form <SHA> or in the form 'latest on <branch>'. "
+                                ~ "The branch name must be compliant to the git format. " 
+                                ~ "For more information, see https://www.spinics.net/lists/git/msg133704.html .");
+      assert(0);
+    }
   } else if ("tag" in repoNode) {
     type = TreeReferenceType.TAG;
-    typeString = "tag";
+    string treeReference = repoNode["tag"].as!string;
+    auto latestMatchResult = treeReference.matchAll(latestBranchedRegex); // @suppress(dscanner.suspicious.unmodified)
+    if(!latestMatchResult.empty()) {  // latest-on-branch form matched. Error!
+      printParsingErrorAndExit("Tag reference can only be in form '<tag name>' or '<latest>'. You should not specify the branch."); //@suppress(dscanner.style.long_line)
+      assert(0);
+    } else {
+      const string[] referenceArray = std.array.split(treeReference, " on ");
+      if (referenceArray.length > 1) {
+        printParsingErrorAndExit("Tag reference branch cannot be specified.");
+        assert(0);
+      }
+      referenceString = referenceArray[0];
+      branchString = "";
+    }
   } else {
     printParsingErrorAndExit("Commit/Tag reference not found. Use 'commit' or 'tag' as key for reference.", 
                               errorPosition);

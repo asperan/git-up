@@ -1,12 +1,6 @@
 module repository;
 
-import std.regex;
 import parsing_utils;
-import std.array;
-
-private immutable auto commitRegex = regex(`^([0-9a-f]{4,40})$`);
-private immutable auto latestCommitRegex = 
-  regex(`^(latest)(( on )(?!\\)([^.]((?!(\.\.)|(\/\.)|(\\))([^\^\:\~\s\x00-\x1f\x7f]))*?)(?<!(\.lock)|([\/])))$`);
 
 /**
     Reference type. It can be a commit or a tag.
@@ -44,6 +38,7 @@ class LocalRepository : NamedParsable {
           string localPath, 
           TreeReferenceType treeReferenceType,
           string treeReference,
+          string branch,
           string installScriptPath)
     in {
       assert(host != "null");
@@ -51,15 +46,7 @@ class LocalRepository : NamedParsable {
       assert(p_name != "null");
       assert(localPath != "null");
       assert(treeReference != "null");
-      if (treeReferenceType == TreeReferenceType.COMMIT) {
-        auto shaMatchResult = treeReference.matchAll(commitRegex); // @suppress(dscanner.suspicious.unmodified)
-        auto latestMatchResult = treeReference.matchAll(latestCommitRegex); // @suppress(dscanner.suspicious.unmodified)
-        if (! ((!shaMatchResult.empty() && shaMatchResult.front.hit == treeReference) || 
-               (!latestMatchResult.empty() && latestMatchResult.front.hit == treeReference))) {
-          printParsingErrorAndExit("Commit reference can be in the form <SHA> or in the form 'latest on <branch>'.");
-          assert(0);
-        }
-      }
+      assert(branch != "null");
     } 
     do {
       this.host = host;
@@ -67,14 +54,8 @@ class LocalRepository : NamedParsable {
       this.p_name = p_name;
       this.localPath = localPath;
       this.refType = treeReferenceType;
-      if (treeReferenceType == TreeReferenceType.COMMIT && !treeReference.matchAll(latestCommitRegex).empty()) {
-        const string[] commitArgs = std.array.split(treeReference, " on ");
-        this.treeReference = commitArgs[0];
-        this.branch = commitArgs.length > 1 ? commitArgs[1] : "master";
-      } else {
-        this.treeReference = treeReference;
-        this.branch = "";
-      }
+      this.treeReference = treeReference;
+      this.branch = branch;
       this.installScriptPath = installScriptPath;
     }
 
@@ -106,7 +87,8 @@ class LocalRepository : NamedParsable {
 }
 
 unittest {
-  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.COMMIT, "4f942", "");
-  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.COMMIT, "latest on master", "");
-  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.TAG, "latest", "");
+  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.COMMIT, "4f942", "" ,"");
+  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.COMMIT, "latest", "master", "");
+  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.TAG, "latest", "", "");
+  // new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.TAG, "latest on branch1", ""); // Not valid, cannot specify branch with latest
 }
