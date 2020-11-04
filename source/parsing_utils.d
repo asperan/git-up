@@ -52,5 +52,5 @@ string parseFilePath(in string filePath) {
 interface NamedParsable
 {
   /** Returns the name of the parsable object. */
-  string name();
+  string fullName();
 }

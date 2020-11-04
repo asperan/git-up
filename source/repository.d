@@ -60,7 +60,7 @@ class LocalRepository : NamedParsable {
     }
 
     /** Return the full name of the repository. */
-    string name() const {
+    string fullName() const {
       string fullName = "Repository '";
       fullName ~= p_host ~ (p_host[p_host.length-1..p_host.length] == "/" ? "" : "/"); //@suppress(dscanner.suspicious.length_subtraction)
       fullName ~= p_author ~ "/";

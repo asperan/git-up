@@ -125,7 +125,8 @@ class RuntimeFileOption : NamedParsable {
       this.argument = FileOptionArgument(argument);
     }
     /** Returns the FileOption name. */
-    string name() const { return fileOption.name; }
+    string fullName() const { return fileOption.name; }
+    alias name = fullName;
     /** Returns the FileOption argument type. */
     ArgumentType type() const { return fileOption.argType; }
     /** Returns the boolean argument, if it has the correct type. */
@@ -171,4 +172,5 @@ unittest {
   RuntimeFileOption rfo = new RuntimeFileOption(&fileOptions[0], true);
   assert(rfo == rfo);
   assert(rfo == "updateOnly");
+  assert(rfo.name() == rfo.fullName());
 }

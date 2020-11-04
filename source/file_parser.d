@@ -184,7 +184,7 @@ private void assertValueUniqueness(T : NamedParsable) (in T[] values, in string 
     for (int i = 0; i < values.length - 1; i++) { // @suppress(dscanner.suspicious.length_subtraction)
       for (int j = 1; j < values.length; j++) {
         if (values[i] == values[j]) {
-          printParsingErrorAndExit("Duplicate value '" ~ values[i].name() ~ "' found. Aborting.", " @ " ~ valuesName);
+          printParsingErrorAndExit("Duplicate value '" ~ values[i].fullName() ~ "' found. Aborting.", " @ " ~ valuesName);
         }
       }
     }
