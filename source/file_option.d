@@ -115,8 +115,12 @@ unittest {
 
 /** Array with all the available FileOptions. */
 shared immutable(immutable(FileOption)[]) fileOptions = [
+  /// If true, git repository to be clone will not be cloned.
   FileOption("updateOnly", ArgumentType.BOOL, false),
-  FileOption("forceInstall", ArgumentType.BOOL, false)
+  /// If true, even if there are no changes, the install script (if present) will be run.
+  FileOption("forceInstall", ArgumentType.BOOL, false),
+  /// If true, the missing directory of an install path will be created before cloning the repository.
+  FileOption("createMissingDirs", ArgumentType.BOOL, false)
 ];
 
 unittest {
