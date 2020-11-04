@@ -14,7 +14,7 @@ import dyaml;
 */
 void loadFile(in string filePath, out RuntimeFileOption[] fileOptions, out LocalRepository[] repoInfo) {
   import std.file : exists;
-  string parsedFilePath = parseFilePath(filePath);
+  string parsedFilePath = parseFilePath(filePath == "" ? "./Gitfile" : filePath);
   if (!exists(parsedFilePath)) {
     printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' does not exist.");
   }
