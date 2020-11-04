@@ -48,13 +48,48 @@ struct FileOption {
   private:
     string p_name;
     ArgumentType p_argType;
-  
+    FileOptionArgument defaultValue;
+
     this(in string name, in ArgumentType argType)
     in(name != null && name != "")
     {
       p_name = name;
       p_argType = argType;
     }
+
+    this(in string name, in ArgumentType argType, in bool booleanArgument) 
+    in(argType == ArgumentType.BOOL)
+    {
+      this(name, argType);
+      defaultValue.p_boolean = booleanArgument;
+    }
+
+    this(in string name, in ArgumentType argType, in int integerArgument) 
+    in(argType == ArgumentType.INT)
+    {
+      this(name, argType);
+      defaultValue.p_integer = integerArgument;
+    }
+
+    this(in string name, in ArgumentType argType, in string stringArgument) 
+    in(argType == ArgumentType.STRING)
+    {
+      this(name, argType);
+      defaultValue.p_str = stringArgument;
+    }
+
+  public:
+    /** Returns the name of the option. */
+    string name() const { return p_name; }
+    /** Returns the argument type. */
+    ArgumentType argType() const { return p_argType; }
+
+    /** Returns the default value, if it has the correct type. */
+    bool defaultBool() const in(argType == ArgumentType.BOOL) { return defaultValue.p_boolean; }
+    /** Returns the default value, if it has the correct type. */
+    int defaultInt() const in(argType == ArgumentType.INT) { return defaultValue.p_integer; }
+    /** Returns the default value, if it has the correct type. */
+    string defaultString() const in(argType == ArgumentType.STRING) { return defaultValue.p_str; }
 
     bool opEquals(FileOption)(const FileOption other) const
     {
@@ -71,11 +106,6 @@ struct FileOption {
       return p_name.hashOf();
     }
 
-  public:
-    /** Returns the name of the option. */
-    string name() const { return p_name; }
-    /** Returns the argument type. */
-    ArgumentType argType() const { return p_argType; }
 }
 
 unittest {
@@ -85,12 +115,13 @@ unittest {
 
 /** Array with all the available FileOptions. */
 shared immutable(immutable(FileOption)[]) fileOptions = [
-  FileOption("updateOnly", ArgumentType.BOOL),
-  FileOption("forceInstall", ArgumentType.BOOL)
+  FileOption("updateOnly", ArgumentType.BOOL, false),
+  FileOption("forceInstall", ArgumentType.BOOL, false)
 ];
 
 unittest {
   assert(FileOption("updateOnly", ArgumentType.INT) == fileOptions[0]);
+  assert(fileOptions[0].defaultBool() == false);
 }
 
 /** FileOption at runtime. it also has an argument of the specified type. */
