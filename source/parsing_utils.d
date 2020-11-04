@@ -4,6 +4,7 @@ import std.stdio;
 import core.stdc.stdlib;
 import std.string;
 import std.file;
+import std.path;
 
 /**
     Prints an error, with optional additional information and exit the program with an error state.
@@ -40,10 +41,10 @@ bool parseBooleanLiteral(in string input, in string optionName) {
     else the current working directory is prepended to the provided path.
 */
 string parseFilePath(in string filePath) {
-  if (filePath[0..1] == "/") { // Absolute path, no transformation needed
+  if (filePath[0..1] == dirSeparator) { // Absolute path, no transformation needed
     return filePath;
   } else { // Relative path, prepend the current directory
-    return getcwd() ~ "/" ~ filePath;
+    return getcwd() ~ dirSeparator ~ filePath;
   }
 }
 
