@@ -134,6 +134,25 @@ class RuntimeFileOption : NamedParsable {
     int argInt() const in(fileOption.argType == ArgumentType.INT) { return argument.p_integer; }
     /** Returns the string argument, if it has the correct type. */
     string argString() const in(fileOption.argType == ArgumentType.STRING) { return argument.p_str; }
+
+    override bool opEquals(Object other) const
+    {
+      if (auto oOpt = cast(RuntimeFileOption) other) {
+        return name() == oOpt.name();
+      } else {
+        return false;
+      }
+    }
+
+    override size_t toHash() @safe nothrow const
+    {
+      return argument.hashOf(fileOption.hashOf());
+    }
+
+    bool opEquals(const string other) const
+    {
+      return name() == other;
+    }
 }
 
 /** Searches an option by name in the array of all options. */
@@ -145,4 +164,11 @@ immutable(FileOption*) searchFileOption(in string name) {
   }
   printParsingErrorAndExit("Option '" ~ name ~ "' not recognized.");
   return null;
+}
+
+
+unittest {
+  RuntimeFileOption rfo = new RuntimeFileOption(&fileOptions[0], true);
+  assert(rfo == rfo);
+  assert(rfo == "updateOnly");
 }
