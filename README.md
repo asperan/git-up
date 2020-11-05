@@ -19,3 +19,29 @@ Git-update is a command-line software to manage installation and update of repos
 
 ### Known issues
 * Switching from 'commit' to 'tag or vice versa can cause problems as there could not be a path forward to the new reference.
+
+### Gitfile example
+
+```
+GlobalOptions:
+  updateOnly: y # Boolean (default value: false); If enabled, no repository will be cloned ex-novo
+  forceInstall: y # Boolean (default value: false); If enabled, even if there is no update, the install script is run.
+  createMissingDirs: y # Boolean (default value: false); If enabled, when cloning the repo, missing directories are created.
+
+Repositories:
+  - host: https://github.com # The host must contain the protocol ('https://')
+    author: gto76
+    name: python-cheatsheet
+    commit: latest on master # commit accepts the sha form (a string with 4 to 40 characters) or "latest on <branch>"
+    localPath: /path/to/git-root/directory 
+  - host: https://gitlab.com
+    author: tildes
+    name: tildes
+    tag: v0.7.0 # tag accepts the tag name or "latest"
+    localPath: a/relative/path/to/git-root/directory
+    installScript: path/to/install/script # Optional; can be inside the repository directory.
+
+```
+
+**Notes**
+* Absolute path are preferred, as relative path changes when changing working directory. 
