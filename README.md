@@ -45,4 +45,5 @@ Repositories:
 ```
 
 **Notes**
-* Absolute path are preferred, as relative path changes when changing working directory. 
+* Absolute path are preferred, as relative path changes when changing working directory.
+* On the local side, the used branch is 'master', even if the remote has another name.
