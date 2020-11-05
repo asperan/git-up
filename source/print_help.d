@@ -3,7 +3,7 @@ module print_help;
 import std.stdio;
 import arg_parser;
 
-private immutable string VERSION = "0.1.0";
+private immutable string VERSION = "1.0.0";
 
 /** Prints help message.
     parameters:
