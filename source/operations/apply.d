@@ -27,12 +27,12 @@ void apply(string gitfilePath) {
             string dirCreateCommand;
             version(linux) { dirCreateCommand = "mkdir -p"; }
             version(Windows) { dirCreateCommand = "mkdir"; }
-            system((dirCreateCommand ~ " " ~ key.localPath()).toStringz());
+            system((dirCreateCommand ~ " '" ~ key.localPath() ~ "'").toStringz());
           } else {
             printExecutionError("apply", "Local path does not exist and createMissingDirs option not enabled.");
           }
         }
-        executeCommandAndCheckError("cd '" ~ key.localPath() ~ "' && git init;", "git init failed.");
+        executeCommandAndCheckError("cd '" ~ key.localPath() ~ "' && git init", "git init failed.");
         const string remoteURL = key.host() 
                                 ~ (key.host()[key.host().length-1..key.host().length] == "/" ? "" : "/") //@suppress(dscanner.suspicious.length_subtraction)
                                 ~ key.author() ~ "/" 
@@ -52,7 +52,7 @@ void apply(string gitfilePath) {
                                         "git log origin/" ~ key.branch() ~ " --first-parent -n 1 --format=\"%H\" " :
                                         "git tag --sort=committerdate | tail -n 1") 
                                       ~ " > .git-updater", "Selected last reference could not be retrieved.");
-          referenceToMerge = read(key.localPath() ~ ".git-updater").to!string;
+          referenceToMerge = read(key.localPath() ~ "/.git-updater").to!string;
         } else {
           referenceToMerge = key.treeReference();
         }
@@ -65,7 +65,7 @@ void apply(string gitfilePath) {
           if (!exists(key.installScriptPath())) {
             printExecutionError("apply", "Install script not found @ " ~ key.installScriptPath());
           } else {
-            if(system((key.installScriptPath()).toStringz())) {
+            if(system(("(" ~ key.installScriptPath() ~ ")").toStringz())) {
               printExecutionError("apply", "Install script has execution errors.");
             }
           }
@@ -74,6 +74,7 @@ void apply(string gitfilePath) {
       case RepoAction.NOTHING:
         break;
     }
+    writeln(key.fullName() ~ " updated.");
   }
 }
 
@@ -98,17 +99,17 @@ private RepoAction computeActionForRepo(in LocalRepository repoInfo, in RuntimeF
   version(linux) { nullDevice = "/dev/null"; }
   version(Windows) { nullDevice = "NUL"; }
   if (!exists(repoInfo.localPath()) 
-      || system(("cd " ~ repoInfo.localPath() ~ "; git status > " ~ nullDevice ~ " 2>&1").toStringz())) { // Repository not present
+      || system(("cd '" ~ repoInfo.localPath() ~ "' && git status > " ~ nullDevice ~ " 2>&1").toStringz())) { // Repository not present
     return searchBooleanOption("updateOnly", options) ? RepoAction.NOTHING : RepoAction.CLONE;
   } else { // Repository present
     system(
-      ("cd " ~ repoInfo.localPath() ~ "; " ~ 
+      ("cd '" ~ repoInfo.localPath() ~ "' && " ~ 
        (repoInfo.refType == TreeReferenceType.COMMIT ? 
          "git show | head -n 1 | cut -d ' ' -f 2" : 
          "git tag --sort=committerdate | tail -n 1") ~ " > .git-updater"
       ).toStringz());
     const string currentReference = read(repoInfo.localPath() ~ "/.git-updater").to!string;
-    system(("cd " ~ repoInfo.localPath() ~ "; rm .git-updater").toStringz());
+    system(("cd '" ~ repoInfo.localPath() ~ "' && rm .git-updater").toStringz());
     if (repoInfo.treeReference() == currentReference) {
       return searchBooleanOption("forceInstall", options) ? RepoAction.INSTALL : RepoAction.NOTHING;
     } else {
