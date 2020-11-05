@@ -12,9 +12,10 @@ Git-update is a command-line software to manage installation and update of repos
 ### Subsequent versions target features
 * [ ] Operation 'check' which notifies whether there are updates available.
 * [ ] Parallelize execution of clones/updates.
-* [ ] Enable support for Windows.
+* [ ] Enable full support for Windows.
 * [ ] Update the repository to the latest commit on a branch.
 * [ ] Parse multiple files in a single call.
+* [ ] Optionfor verbose output
 
 
 ### Known issues
