@@ -12,7 +12,7 @@
 	},
 	"description": "Command line tool to manage updates of git repositories.",
 	"license": "MPL-2.0",
-	"name": "git-update",
-	"targetName": "git-update.exe",
+	"name": "git-updater",
+	"targetName": "git-updater.exe",
 	"targetType": "executable"
 }
