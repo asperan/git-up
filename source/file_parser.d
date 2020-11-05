@@ -15,19 +15,25 @@ import dyaml;
 void loadFile(in string filePath, out RuntimeFileOption[] fileOptions, out LocalRepository[] repoInfo) {
   import std.file : exists;
   string parsedFilePath = parseFilePath(filePath == "" ? "./Gitfile" : filePath);
-  if (!exists(parsedFilePath)) {
-    printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' does not exist.");
-  }
-  Node root = Loader.fromFile(parsedFilePath).load();
-  foreach (string key, string value ; root["GlobalOptions"])
-  {
-    fileOptions ~= buildFileOption(key, value);
+  if (!exists(parsedFilePath)) { printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' does not exist."); }
+  Loader loader = Loader.fromFile(parsedFilePath);
+  if (loader.empty()) { printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' is empty."); }
+  const Node root = loader.load();
+  if ("GlobalOptions" in root && root["GlobalOptions"].type == NodeType.mapping) {
+    foreach (string key, string value ; root["GlobalOptions"])
+    {
+      fileOptions ~= buildFileOption(key, value);
+    }
   }
   assertValueUniqueness!(RuntimeFileOption)(fileOptions, "GlobalOptions");
-  for (int i = 0; i < root["Repositories"].length; i++ ) {
-    repoInfo ~= buildRepoInfo(root["Repositories"][i], " @ " ~ toShortOrdinal(i + 1) ~ " repository");
+  if ("Repositories" in root && root["Repositories"].type == NodeType.sequence) {
+    for (int i = 0; i < root["Repositories"].length; i++ ) {
+      repoInfo ~= buildRepoInfo(root["Repositories"][i], " @ " ~ toShortOrdinal(i + 1) ~ " repository");
+    }
+    assertValueUniqueness!(LocalRepository)(repoInfo, "Repositories");
+  } else {
+    printParsingErrorAndExit("Repositories not specified or empty.");
   }
-  assertValueUniqueness!(LocalRepository)(repoInfo, "Repositories");
 }
 
 private LocalRepository buildRepoInfo(in Node currentRepository, in string errorPosition) 
@@ -49,9 +55,7 @@ in (currentRepository.hasNoRefTypeConflict(errorPosition))
   string installScriptPath;
   if ("installScript" in currentRepository) {
     installScriptPath = parseFilePath(currentRepository["installScript"].as!string);
-    if (!isValidPath(installScriptPath)) {
-      printParsingErrorAndExit("Install script path is not valid.", errorPosition);
-    }
+    if (!isValidPath(installScriptPath)) {printParsingErrorAndExit("Install script path is not valid.", errorPosition);}
   } else {
     installScriptPath = "";
   }
