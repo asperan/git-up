@@ -53,6 +53,7 @@ void apply(string gitfilePath) {
                                         "git tag --sort=committerdate | tail -n 1") 
                                       ~ " > .git-updater", "Selected last reference could not be retrieved.");
           referenceToMerge = read(key.localPath() ~ "/.git-updater").to!string;
+          system(("cd '" ~ key.localPath() ~ "' && rm .git-updater").toStringz());
         } else {
           referenceToMerge = key.treeReference();
         }
