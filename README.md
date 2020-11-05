@@ -17,12 +17,7 @@ Git-update is a command-line software to manage installation and update of repos
 * [ ] Parse multiple files in a single call.
 * [ ] Optionfor verbose output
 
-
-### Known issues
-* Switching from 'commit' to 'tag or vice versa can cause problems as there could not be a path forward to the new reference.
-
 ### Gitfile example
-
 ```
 GlobalOptions:
   updateOnly: y # Boolean (default value: false); If enabled, no repository will be cloned ex-novo
@@ -47,3 +42,6 @@ Repositories:
 **Notes**
 * Absolute path are preferred, as relative path changes when changing working directory.
 * On the local side, the used branch is 'master', even if the remote has another name.
+
+### Known issues
+* Switching from 'commit' to 'tag or vice versa can cause problems as there could not be a path forward to the new reference.
