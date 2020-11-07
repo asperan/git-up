@@ -64,6 +64,7 @@ Repositories:
 
 * Absolute path are preferred, as relative path changes when changing working directory.
 * On the local side, the used branch is 'master', even if the remote has another name.
+* The dyaml library does **not** recognize tabs as whitespaces, so you **must** indent the Gitfile with spaces.
 
 ----
 
