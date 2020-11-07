@@ -211,7 +211,7 @@ in (value.length > 0)
       case ArgumentType.BOOL:
         return new RuntimeFileOption(fo, value.parseBooleanLiteral(key));
       case ArgumentType.INT:
-        return new RuntimeFileOption(fo, 0);
+        return new RuntimeFileOption(fo, value.parseIntegerLiteral(key));
       case ArgumentType.STRING:
         return new RuntimeFileOption(fo, value);
     }

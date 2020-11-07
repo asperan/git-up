@@ -35,6 +35,20 @@ bool parseBooleanLiteral(in string input, in string optionName) {
   }
 }
 
+/** Parses a YAML-complient integer literal into its integer value. */
+int parseIntegerLiteral(in string input, in string optionName) 
+in(input.length > 0)
+in(optionName.length > 0)
+{
+  import std.conv : to;
+  return input.to!int;
+}
+
+unittest {
+  assert("100".parseIntegerLiteral("unittest") == 100);
+  //assert("42e10".parseIntegerLiteral("unittest") == 42); // Error, 42e10 is not recognized as an integer
+}
+
 /**
     Manages file paths to transform the into absolute paths.
     If the path is already absolute, nothing is changed;
