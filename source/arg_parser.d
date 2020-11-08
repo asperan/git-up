@@ -72,7 +72,8 @@ struct Option {
  */
 shared immutable(immutable(Option)[]) options  = [
   Option("-h", "--help", "Show help panel and exit.", false, true),
-  Option("-v", "--version", "Show program version and exit.", false, true)
+  Option("-v", "--version", "Show program version and exit.", false, true),
+  Option("-w", "--verbose", "Print additional information during execution.", false, false)
 ];
 
 /+
