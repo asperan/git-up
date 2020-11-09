@@ -29,7 +29,7 @@ int main(string[] args) {
   return 0;
 }
 
-private void checkLoneOptions(RuntimeOption[] options) {
+private void checkLoneOptions(in RuntimeOption[] options) {
   foreach (option; options)
   {
     if (option.option.isLone) {
@@ -38,7 +38,7 @@ private void checkLoneOptions(RuntimeOption[] options) {
   }
 }
 
-private void handleLoneOption(RuntimeOption option) {
+private void handleLoneOption(in RuntimeOption option) {
   final switch(option.option.shortVersion) {
     case "-h":
       print_help.helpMessage();
