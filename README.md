@@ -63,6 +63,7 @@ Repositories:
 ### Notes
 
 * Absolute path are preferred, as relative path changes when changing working directory.
+* The localPath field points to the folder in which there will be the repository; it can be non-existent if the option `createMissingDirs` is true. For example, if the wanted repository is `python-cheatsheet` from *gto76* (first one in the Gitfile example), its localPath can be `/home/user/repos/python-cheatsheet`.
 * On the local side, the used branch is 'master', even if the remote has another name.
 * The dyaml library does **not** recognize tabs as whitespaces, so you **must** indent the Gitfile with spaces.
 * The installScript value is run as-is in a subshell, using the same working directory as the instance of `git-updater` launched. This means that you can either write the commands you want to run (for example `cd ./into/repo && make`) or the path to the script file to be run (as said in the first note, it is better using the absolute path of the file). (For more information see #3).
