@@ -10,6 +10,7 @@ import file_parser;
 import repository;
 import file_option;
 import print_help : printVerbose, getNullDevice;
+import arg_parser : RuntimeConfiguration;
 
 /**
     Load yaml file and apply the specified configuration.
@@ -51,25 +52,25 @@ void apply(string gitfilePath) {
       goto case;
       case RepoAction.UPDATE:
         assert(exists(key.localPath()), "Local path should exist at this point.");
-        // TODO: maybe redirect output
         printVerbose("Fetching commits and tags from all remote branches...");
         executeCommandAndCheckError("cd '" ~ key.localPath() ~ "' && git fetch --all --tags", 
                                     "git fetch could not fetch remote commits.");
         string referenceToMerge;
         if (key.treeReference() == "latest") {
           printVerbose("Retrieving latest " ~ (key.refType() == TreeReferenceType.COMMIT ? "commit" : "tag") ~ "...");
-          executeCommandAndCheckError("cd '" ~ key.localPath() ~ "' && " 
-                                      ~ (key.refType() == TreeReferenceType.COMMIT ? 
-                                        "git log origin/" ~ key.branch() ~ " --first-parent -n 1 --format=\"%H\" " :
-                                        "git tag --sort=committerdate | tail -n 1") 
-                                      ~ " > .git-updater", "Selected last reference could not be retrieved.");
+          if(system(("cd '" ~ key.localPath() ~ "' && " 
+                    ~ (key.refType() == TreeReferenceType.COMMIT ? 
+                        "git log origin/" ~ key.branch() ~ " --first-parent -n 1 --format=\"%H\" " :
+                        "git tag --sort=committerdate | tail -n 1") 
+                    ~ " > .git-updater").toStringz())) {
+            printExecutionError("apply", "Selected last reference could not be retrieved.");
+          }
           referenceToMerge = read(key.localPath() ~ "/.git-updater").to!string;
           system(("cd '" ~ key.localPath() ~ "' && rm .git-updater").toStringz());
         } else {
           referenceToMerge = key.treeReference();
         }
         printVerbose("Merging " ~ (key.refType() == TreeReferenceType.COMMIT ? "commit" : "tag") ~ " '" ~ referenceToMerge ~ "'..."); //@suppress(dscanner.style.long_line)
-        // TODO: maybe redirect output
         executeCommandAndCheckError("cd '" ~ key.localPath() ~ "' && git merge " ~ referenceToMerge, 
                                     "git failed to merge.");
         printVerbose("Update complete.");
@@ -134,7 +135,7 @@ private void printExecutionError(in string operation, in string errorMessage) {
 }
 
 private void executeCommandAndCheckError(in string command, in string errorMessage) {
-  if(system(command.toStringz())) {
+  if(system((command ~ (RuntimeConfiguration.noRedirect() ? "" : (" > " ~ getNullDevice()))).toStringz())) {
     printExecutionError("apply", errorMessage);
   }
 }
