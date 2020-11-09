@@ -119,10 +119,6 @@ private RepoAction computeActionForRepo(in LocalRepository repoInfo, in RuntimeF
   }
 }
 
-private void doActionForRepo(in string action, in string repoInfo) {
-
-}
-
 private void printExecutionError(in string operation, in string errorMessage) {
   stderr.writeln("Execution error for " ~ operation ~ ": " ~ errorMessage);
   exit(1);
