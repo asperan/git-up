@@ -73,7 +73,8 @@ struct Option {
 shared immutable(immutable(Option)[]) options  = [
   Option("-h", "--help", "Show help panel and exit.", false, true),
   Option("-v", "--version", "Show program version and exit.", false, true),
-  Option("-w", "--verbose", "Print additional informations during operation execution.", false, false)
+  Option("-w", "--verbose", "Print additional informations during operation execution.", false, false),
+  Option("-nr", "--no-redirect", "Disable output redirection of executed commands.", false, false)
 ];
 
 /+
@@ -222,6 +223,11 @@ class RuntimeConfiguration {
     /** Returns whether the option '-w' or '--verbose' is enabled. */
     static bool verbose() {
       return ("--verbose" in instance.configuration) != null;
+    }
+
+    /** Returns whether the option '-nr' or '--no-redirect' is enabled. */
+    static bool noRedirect() {
+      return ("--no-redirect" in instance.configuration) != null;
     }
 
 }
