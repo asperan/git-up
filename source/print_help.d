@@ -39,3 +39,11 @@ void helpMessage(in string errorMessage = "") {
 void versionMessage() {
   writeln("Current version: ", VERSION);
 }
+
+/** If the verbose output is enabled, prints the message. */
+pragma(inline, true):
+void printVerbose(in string message) {
+  if (RuntimeConfiguration.verbose()) {
+    writefln(message);
+  }
+}
