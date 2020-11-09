@@ -16,7 +16,7 @@ int main(string[] args) {
     RuntimeOption[] options;
     arg_parser.parseArguments(args, operation, mainArgument, options);
     checkLoneOptions(options);
-    // TODO: apply options
+    RuntimeConfiguration.loadConfiguration(options);
     switch (operation) {
       case "apply":
         apply.apply(mainArgument);
