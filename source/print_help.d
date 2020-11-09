@@ -47,3 +47,9 @@ void printVerbose(in string message) {
     writefln(message);
   }
 }
+
+pragma(inline, true):
+string getNullDevice() {
+  version(linux) { return "/dev/null"; }
+  version(Widnows) { return "NUL"; }
+}
