@@ -7,6 +7,7 @@ import repository;
 import parsing_utils;
 import file_option;
 import dyaml;
+import print_help : printVerbose;
 
 /**
     Loads Gitfile if it exists.
@@ -20,6 +21,7 @@ void loadFile(in string filePath, out RuntimeFileOption[] fileOptions, out Local
   if (loader.empty()) { printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' is empty."); }
   const Node root = loader.load();
   if ("GlobalOptions" in root && root["GlobalOptions"].type == NodeType.mapping) {
+    printVerbose("Parsing file options...");
     foreach (string key, string value ; root["GlobalOptions"])
     {
       fileOptions ~= buildFileOption(key, value);
@@ -27,6 +29,7 @@ void loadFile(in string filePath, out RuntimeFileOption[] fileOptions, out Local
   }
   assertValueUniqueness!(RuntimeFileOption)(fileOptions, "GlobalOptions");
   if ("Repositories" in root && root["Repositories"].type == NodeType.sequence) {
+    printVerbose("Parsing repositories...");
     for (int i = 0; i < root["Repositories"].length; i++ ) {
       repoInfo ~= buildRepoInfo(root["Repositories"][i], " @ " ~ toShortOrdinal(i + 1) ~ " repository");
     }
