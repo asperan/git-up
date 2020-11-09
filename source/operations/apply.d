@@ -9,7 +9,7 @@ import std.string : toStringz;
 import file_parser;
 import repository;
 import file_option;
-import print_help : printVerbose;
+import print_help : printVerbose, getNullDevice;
 
 /**
     Load yaml file and apply the specified configuration.
@@ -107,11 +107,8 @@ private enum RepoAction {
 
 /** Returns the action to do for a specified repository, based on the active options. */
 private RepoAction computeActionForRepo(in LocalRepository repoInfo, in RuntimeFileOption[] options) {
-  string nullDevice;
-  version(linux) { nullDevice = "/dev/null"; }
-  version(Windows) { nullDevice = "NUL"; }
   if (!exists(repoInfo.localPath()) 
-      || system(("cd '" ~ repoInfo.localPath() ~ "' && git status > " ~ nullDevice ~ " 2>&1").toStringz())) { // Repository not present
+      || system(("cd '" ~ repoInfo.localPath() ~ "' && git status > " ~ getNullDevice() ~ " 2>&1").toStringz())) { // Repository not present
     return searchBooleanOption("updateOnly", options) ? RepoAction.NOTHING : RepoAction.CLONE;
   } else { // Repository present
     system(
