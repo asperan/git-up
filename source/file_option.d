@@ -209,3 +209,57 @@ unittest {
   assert(rfo == "updateOnly");
   assert(rfo.name() == rfo.fullName());
 }
+
+/** Return the value of a boolean runtime option if present in the passed array. The default value otherwise. */
+bool searchBooleanOption(in string name, in RuntimeFileOption[] options) {
+  foreach (key; options) {
+    if (key == name) {
+      assert(key.type() == ArgumentType.BOOL, "searchBooleanOption called on a non-boolean option");
+      return key.argBool();
+    }
+  }
+  foreach (key; fileOptions)
+  {
+    if (key == name) {
+      assert(key.argType() == ArgumentType.BOOL, "searchBooleanOption called on a non-boolean option");
+      return key.defaultBool();
+    }
+  }
+  assert(0, "Option '" ~ name ~ "' not recognized.");
+}
+
+/** Return the value of an integer runtime option if present in the passed array. The default value otherwise. */
+int searchIntegerOption(in string name, in RuntimeFileOption[] options) {
+  foreach (key; options) {
+    if (key == name) {
+      assert(key.type() == ArgumentType.INT, "searchIntegerOption called on a non-integer option");
+      return key.argInt();
+    }
+  }
+  foreach (key; fileOptions)
+  {
+    if (key == name) {
+      assert(key.argType() == ArgumentType.INT, "searchIntegerOption called on a non-integer option");
+      return key.defaultInt();
+    }
+  }
+  assert(0, "Option '" ~ name ~ "' not recognized.");
+}
+
+/** Return the value of a string runtime option if present in the passed array. The default value otherwise. */
+string searchStringOption(in string name, in RuntimeFileOption[] options) {
+  foreach (key; options) {
+    if (key == name) {
+      assert(key.type() == ArgumentType.STRING, "searchStringOption called on a non-string option");
+      return key.argString();
+    }
+  }
+  foreach (key; fileOptions)
+  {
+    if (key == name) {
+      assert(key.argType() == ArgumentType.STRING, "searchStringOption called on a non-string option");
+      return key.defaultString();
+    }
+  }
+  assert(0, "Option '" ~ name ~ "' not recognized.");
+}
