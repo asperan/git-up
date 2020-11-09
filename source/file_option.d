@@ -4,6 +4,9 @@ import std.stdio;
 
 import parsing_utils;
 
+// TODO: change FileOption argument with Algebraic!(int, bool, string)
+// https://dlang.org/library/std/variant/algebraic.html
+
 /** Type of the argument of a file option. */
 enum ArgumentType {
   BOOL,
