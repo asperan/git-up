@@ -201,3 +201,27 @@ unittest {
   assert(mainArgument == "file");
   assert(runtimeOptions.length == optionArgs.length);
 }
+
+/** Runtime Configuration singleton. A configuration consists in all the not lone options enabled from the command line */
+class RuntimeConfiguration {
+  private:
+    shared static RuntimeConfiguration instance = new RuntimeConfiguration();
+    string[string] configuration;
+    shared static this() {}
+
+  public:
+    /** Load a configuration into the singleton. */
+    static void loadConfiguration(in RuntimeOption[] options) {
+      foreach(opt; options) {
+        if (!opt.option().isLone()) {
+          instance.configuration[opt.option().longVersion()] = opt.optionArgument();
+        }
+      }
+    }
+
+    /** Returns whether the option '-w' or '--verbose' is enabled. */
+    static bool verbose() {
+      return ("--verbose" in instance.configuration) != null;
+    }
+
+}
