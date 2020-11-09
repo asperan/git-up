@@ -2,8 +2,8 @@ module apply;
 
 import std.stdio;
 import std.conv;
-import std.file;
-import core.stdc.stdlib;
+import std.file : exists, read;
+import core.stdc.stdlib : system, exit;
 import std.string : toStringz;
 
 import file_parser;
@@ -107,9 +107,6 @@ private enum RepoAction {
 
 /** Returns the action to do for a specified repository, based on the active options. */
 private RepoAction computeActionForRepo(in LocalRepository repoInfo, in RuntimeFileOption[] options) {
-  import std.file : exists;
-  import core.stdc.stdlib : system;
-
   string nullDevice;
   version(linux) { nullDevice = "/dev/null"; }
   version(Windows) { nullDevice = "NUL"; }
