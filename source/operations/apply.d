@@ -5,6 +5,7 @@ import std.conv;
 import std.file : exists, read;
 import core.stdc.stdlib : system, exit;
 import std.string : toStringz;
+import std.path : dirSeparator;
 
 import file_parser;
 import repository;
@@ -65,7 +66,7 @@ void apply(string gitfilePath) {
                     ~ " > .git-updater").toStringz())) {
             printExecutionError("apply", "Selected last reference could not be retrieved.");
           }
-          referenceToMerge = read(key.localPath() ~ "/.git-updater").to!string;
+          referenceToMerge = read(key.localPath() ~ dirSeparator ~ ".git-updater").to!string;
           system(("cd '" ~ key.localPath() ~ "' && rm .git-updater").toStringz());
         } else {
           referenceToMerge = key.treeReference();
@@ -118,7 +119,7 @@ private RepoAction computeActionForRepo(in LocalRepository repoInfo, in RuntimeF
          "git show | head -n 1 | cut -d ' ' -f 2" : 
          "git tag --sort=committerdate | tail -n 1") ~ " > .git-updater"
       ).toStringz());
-    const string currentReference = read(repoInfo.localPath() ~ "/.git-updater").to!string;
+    const string currentReference = read(repoInfo.localPath() ~ dirSeparator ~ ".git-updater").to!string;
     system(("cd '" ~ repoInfo.localPath() ~ "' && rm .git-updater").toStringz());
     if (repoInfo.treeReference() == currentReference) {
       return searchBooleanOption("forceInstall", options) ? RepoAction.INSTALL : RepoAction.NOTHING;

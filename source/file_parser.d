@@ -2,6 +2,7 @@ module file_parser;
 
 import std.stdio;
 import std.regex;
+import std.path : dirSeparator;
 
 import repository;
 import parsing_utils;
@@ -15,7 +16,7 @@ import print_help : printVerbose;
 */
 void loadFile(in string filePath, out RuntimeFileOption[] fileOptions, out LocalRepository[] repoInfo) {
   import std.file : exists;
-  string parsedFilePath = parseFilePath(filePath == "" ? "./Gitfile" : filePath);
+  string parsedFilePath = parseFilePath(filePath == "" ? "." ~ dirSeparator ~ "Gitfile" : filePath);
   if (!exists(parsedFilePath)) { printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' does not exist."); }
   Loader loader = Loader.fromFile(parsedFilePath);
   if (loader.empty()) { printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' is empty."); }
