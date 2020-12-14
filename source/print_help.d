@@ -51,5 +51,5 @@ void printVerbose(in string message) {
 pragma(inline, true):
 string getNullDevice() {
   version(linux) { return "/dev/null"; }
-  version(Widnows) { return "NUL"; }
+  version(Windows) { return "NUL"; }
 }
