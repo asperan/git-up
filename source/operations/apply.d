@@ -17,13 +17,13 @@ import arg_parser : RuntimeConfiguration;
     Load yaml file and apply the specified configuration.
 */
 void apply(string gitfilePath) {
-  printVerbose("Applying configuration in file '" ~ gitfilePath ~ "'...");
+  printVerbose("Applying configuration in file \"" ~ gitfilePath ~ "\"...");
   RuntimeFileOption[] options;
   LocalRepository[] repoInfo;
   loadFile(gitfilePath, options, repoInfo);
   foreach (LocalRepository key; repoInfo)
   {
-    printVerbose("Computing action repository '" ~ key.fullName() ~ "'...");
+    printVerbose("Computing action repository \"" ~ key.fullName() ~ "\"...");
     const RepoAction action = computeActionForRepo(key, options);
     printVerbose("Action: " ~ action.to!string);
     final switch (action) {
@@ -31,35 +31,35 @@ void apply(string gitfilePath) {
         printVerbose("Checking existence of localPath...");
         if (!exists(key.localPath())) {
           if (searchBooleanOption("createMissingDirs", options)) {
-            printVerbose("Creating new directory at '" ~ key.localPath() ~ "'...");
+            printVerbose("Creating new directory at \"" ~ key.localPath() ~ "\"...");
             string dirCreateCommand;
             version(linux) { dirCreateCommand = "mkdir -p"; }
             version(Windows) { dirCreateCommand = "mkdir"; }
-            system((dirCreateCommand ~ " '" ~ key.localPath() ~ "'").toStringz());
+            system((dirCreateCommand ~ " \"" ~ key.localPath() ~ "\"").toStringz());
           } else {
             printExecutionError("apply", "Local path does not exist and createMissingDirs option not enabled.");
           }
         }
         printVerbose("Initializing directory...");
-        executeCommandAndCheckError("cd '" ~ key.localPath() ~ "' && git init", "git init failed.");
+        executeCommandAndCheckError("cd \"" ~ key.localPath() ~ "\" && git init", "git init failed.");
         const string remoteURL = key.host() 
                                 ~ (key.host()[key.host().length-1..key.host().length] == "/" ? "" : "/") //@suppress(dscanner.suspicious.length_subtraction)
                                 ~ key.author() ~ "/" 
                                 ~ key.name();
-        printVerbose("Adding remote '" ~ remoteURL ~ "' named 'origin'");
-        executeCommandAndCheckError("cd '" ~ key.localPath() ~ "' && git remote add origin " ~ remoteURL, 
+        printVerbose("Adding remote \"" ~ remoteURL ~ "\" named \"origin\"");
+        executeCommandAndCheckError("cd \"" ~ key.localPath() ~ "\" && git remote add origin " ~ remoteURL, 
                                     "git remote failed to add the origin.");
         printVerbose("Initializing completed.");  
       goto case;
       case RepoAction.UPDATE:
         assert(exists(key.localPath()), "Local path should exist at this point.");
         printVerbose("Fetching commits and tags from all remote branches...");
-        executeCommandAndCheckError("cd '" ~ key.localPath() ~ "' && git fetch --all --tags", 
+        executeCommandAndCheckError("cd \"" ~ key.localPath() ~ "\" && git fetch --all --tags", 
                                     "git fetch could not fetch remote commits.");
         string referenceToMerge;
         if (key.treeReference() == "latest") {
           printVerbose("Retrieving latest " ~ (key.refType() == TreeReferenceType.COMMIT ? "commit" : "tag") ~ "...");
-          if(system(("cd '" ~ key.localPath() ~ "' && " 
+          if(system(("cd \"" ~ key.localPath() ~ "\" && " 
                     ~ (key.refType() == TreeReferenceType.COMMIT ? 
                         "git log origin/" ~ key.branch() ~ " --first-parent -n 1 --format=\"%H\" " :
                         "git tag --sort=committerdate | tail -n 1") 
@@ -67,12 +67,12 @@ void apply(string gitfilePath) {
             printExecutionError("apply", "Selected last reference could not be retrieved.");
           }
           referenceToMerge = read(key.localPath() ~ dirSeparator ~ ".git-updater").to!string;
-          system(("cd '" ~ key.localPath() ~ "' && rm .git-updater").toStringz());
+          system(("cd \"" ~ key.localPath() ~ "\" && rm .git-updater").toStringz());
         } else {
           referenceToMerge = key.treeReference();
         }
-        printVerbose("Merging " ~ (key.refType() == TreeReferenceType.COMMIT ? "commit" : "tag") ~ " '" ~ referenceToMerge ~ "'..."); //@suppress(dscanner.style.long_line)
-        executeCommandAndCheckError("cd '" ~ key.localPath() ~ "' && git merge " ~ referenceToMerge, 
+        printVerbose("Merging " ~ (key.refType() == TreeReferenceType.COMMIT ? "commit" : "tag") ~ " \"" ~ referenceToMerge ~ "\"..."); //@suppress(dscanner.style.long_line)
+        executeCommandAndCheckError("cd \"" ~ key.localPath() ~ "\" && git merge " ~ referenceToMerge, 
                                     "git failed to merge.");
         printVerbose("Update complete.");
         goto case;
@@ -91,7 +91,7 @@ void apply(string gitfilePath) {
       case RepoAction.NOTHING:
         break;
     }
-    writeln("Repository '"~ key.fullName() ~ "' updated successfully.");
+    writeln("Repository \""~ key.fullName() ~ "\" updated successfully.");
   }
 }
 
@@ -110,17 +110,17 @@ private enum RepoAction {
 /** Returns the action to do for a specified repository, based on the active options. */
 private RepoAction computeActionForRepo(in LocalRepository repoInfo, in RuntimeFileOption[] options) {
   if (!exists(repoInfo.localPath()) 
-      || system(("cd '" ~ repoInfo.localPath() ~ "' && git status > " ~ getNullDevice() ~ " 2>&1").toStringz())) { // Repository not present
+      || system(("cd \"" ~ repoInfo.localPath() ~ "\" && git status > " ~ getNullDevice() ~ " 2>&1").toStringz())) { // Repository not present
     return searchBooleanOption("updateOnly", options) ? RepoAction.NOTHING : RepoAction.CLONE;
   } else { // Repository present
     system(
-      ("cd '" ~ repoInfo.localPath() ~ "' && " ~ 
+      ("cd \"" ~ repoInfo.localPath() ~ "\" && " ~ 
        (repoInfo.refType == TreeReferenceType.COMMIT ? 
-         "git show | head -n 1 | cut -d ' ' -f 2" : 
+         "git show | head -n 1 | cut -d \" \" -f 2" : 
          "git tag --sort=committerdate | tail -n 1") ~ " > .git-updater"
       ).toStringz());
     const string currentReference = read(repoInfo.localPath() ~ dirSeparator ~ ".git-updater").to!string;
-    system(("cd '" ~ repoInfo.localPath() ~ "' && rm .git-updater").toStringz());
+    system(("cd \"" ~ repoInfo.localPath() ~ "\" && rm .git-updater").toStringz());
     if (repoInfo.treeReference() == currentReference) {
       return searchBooleanOption("forceInstall", options) ? RepoAction.INSTALL : RepoAction.NOTHING;
     } else {
