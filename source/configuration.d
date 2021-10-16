@@ -72,7 +72,7 @@ private __gshared CommandLineOptionParser cliOptionParser =
 
 private void printHelpMessage() {
   import std.path : baseName;
-  string usageString = "Usage: " ~ baseName(executableName) ~ " [options] <sub-command>" ~ "\n";
+  string usageString = "Usage: " ~ baseName(executableName) ~ " <[-h|-v]|<sub-command> [options]>" ~ "\n";
   string subcommandsString = "" ~ "\n";
   string cliOptionsString = "Options:" ~ "\n" ~ getSimpleHelpMessage(cliOptionParser);
 
