@@ -64,25 +64,21 @@ string[] parseCliArguments(string[] args) {
 }
 
 /**
- * Prints the given error message and exit the program with an exit status 1.
- * Params:
- *   errorMessage = the message to display.
- */
-void printErrorHelpAndExit(in string errorMessage) {
-  import core.stdc.stdlib : exit;
-  import std.stdio : writeln;
-  writeln("Error: " ~ errorMessage);
-  printHelpMessage();
-  exit(1);
-}
-
-/**
  * Set the executable name. It should be used only at the start of the program (i.e. the first lines of the main function).
  * Params:
  *   execName = the executable name.
  */
 void setExecutableName(in string execName) {
   executableName = execName;
+}
+
+string getHelpMessage() {
+  import std.path : baseName;
+  string usageString = "Usage: " ~ baseName(executableName) ~ " <[-h|-v]|<sub-command> [options]>" ~ "\n";
+  string subcommandsString = "" ~ "\n";
+  string cliOptionsString = "Options:" ~ "\n" ~ getSimpleHelpMessage(cliOptionParser);
+  
+  return usageString ~ "\n" ~ subcommandsString ~ "\n" ~ cliOptionsString;
 }
 
 private string executableName = "";
@@ -96,18 +92,17 @@ private __gshared CommandLineOptionParser cliOptionParser =
 	.build();
 
 private void printHelpMessage() {
-  import std.path : baseName;
-  string usageString = "Usage: " ~ baseName(executableName) ~ " <[-h|-v]|<sub-command> [options]>" ~ "\n";
-  string subcommandsString = "" ~ "\n";
-  string cliOptionsString = "Options:" ~ "\n" ~ getSimpleHelpMessage(cliOptionParser);
-
   import std.stdio : writeln;
-  writeln(usageString ~ "\n" ~ subcommandsString ~ "\n" ~ cliOptionsString);
+  import core.stdc.stdlib : exit;
+  writeln(getHelpMessage());
+  exit(0);
 }
 
 private string VERSION = "v1.2.0";
 
 private void printVersionMessage() {
   import std.stdio : writeln;
+  import core.stdc.stdlib : exit;
   writeln("Version: " ~ VERSION);
+  exit(0);
 }
