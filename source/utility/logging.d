@@ -46,6 +46,9 @@ string getNullDevice() {
   version(Windows) { return "NUL"; }
 }
 
+/**
+ * Converts an unsigned integer into the ordinal string representation.
+ */
 string toShortOrdinal(int i) 
 in (i>0)
 {
