@@ -15,20 +15,44 @@ final class Configuration {
     return instance;
   }
 
+  // CLI options + flags
   private bool verbose;
+  private bool quiet;
+
+  // Gitfile options
+  private bool updateOnly;
+  private bool forceInstall;
+  private bool createMissingDirs;
 
   private this() { 
     verbose = false;
+    quiet = false;
+    updateOnly = true;
+    forceInstall = false;
+    createMissingDirs = false;
   }
 
   /**
    * Returns: whether the flag 'verbose' is on.
    */
   public bool isVerbose() { return this.verbose; }
+  /**
+   * Returns: whether the flag 'quiet' is on.
+   */
+  public bool isQuiet() { return this.quiet; }
 
-  private void setVerbose(bool on) {
-    this.verbose = on;
-  }
+  public bool getUpdateOnly() { return this.updateOnly; }
+  public void setUpdateOnly(bool on) { this.updateOnly = on; }
+
+  public bool getForceInstall() { return this.forceInstall; }
+  public void setForceInstall(bool on) { this.forceInstall = on; }
+
+  public bool getCreateMissingDirs() { return this.createMissingDirs; }
+  public void setCreateMissingDirs(bool on) { this.createMissingDirs = on; }
+
+  private void setVerbose(bool on) { this.verbose = on; }
+
+  private void setQuiet(bool on) { this.quiet = on; }
 }
 
 /**
@@ -68,6 +92,7 @@ private __gshared CommandLineOptionParser cliOptionParser =
   .addOption("-h", "--help", "Print help message and exit.", () { printHelpMessage(); })
   .addOption("-v", "--version", "Print version number and exit.", () { printVersionMessage(); })
   .addOption("-w", "--verbose", "Verbose output.", () { Configuration.getInstance.setVerbose(true); })
+  .addOption("-q", "--quiet", "Silent output. Prevail over verbose option.", () { Configuration.getInstance.setQuiet(true); })
 	.build();
 
 private void printHelpMessage() {
