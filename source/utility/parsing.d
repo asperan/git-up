@@ -3,8 +3,23 @@ module utility.parsing;
 import utility.logging;
 
 /**
-    Parses a YAML-compliant boolean literal into its bool value.
-*/
+ * Handles the remaining arguments by using the first as the operation and the second as the operation own argument.
+ */
+void handleRemainingArgs(in string[] remainingArgs) {
+  import operations : operationMap;
+  auto selectedOperation = (remainingArgs[0] in operationMap);
+  if (selectedOperation is null) {
+    printErrorHelpAndExit("Operation '" ~ remainingArgs[0] ~ "' not supported.");
+  } else {
+    string operationArgument = "./Gitfile";
+    if (remainingArgs.length >= 2) { operationArgument = remainingArgs[1]; }
+    (*selectedOperation)(operationArgument);
+  }
+}
+
+/**
+ * Parses a YAML-compliant boolean literal into its bool value.
+ */
 bool parseBooleanLiteral(in string input, in string optionName) {
   import std.string : toLower;
   switch (input.toLower()) {
@@ -35,5 +50,4 @@ in(optionName.length > 0)
     return printParsingErrorAndExit("Value '" ~ input ~ "' cannot be parsed into an integer.", " @ option " ~ optionName);
   }
 }
-
 
