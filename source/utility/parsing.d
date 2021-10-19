@@ -51,3 +51,13 @@ in(optionName.length > 0)
   }
 }
 
+/**
+ * Returns: the absolute file path.
+ */
+string getFullFilePath(in string filePath) {
+  import std.path : buildNormalizedPath, absolutePath, expandTilde;
+  return filePath
+           .expandTilde()
+           .absolutePath()
+           .buildNormalizedPath();
+}
