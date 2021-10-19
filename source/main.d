@@ -2,7 +2,7 @@ module main;
 
 import configuration;
 import utility.logging : printErrorHelpAndExit;
-import utility.parsing : handleRemainingArgs;
+import operations : handleRemainingArgs;
 
 void main(string[] args) {
   setExecutableName(args[0]);
