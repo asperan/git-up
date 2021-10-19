@@ -27,6 +27,15 @@ noreturn printParsingErrorAndExit(in string errorMessage, in string additionalIn
 }
 
 /**
+ * Prints an execution error message occured during an operation and exit with an error state.
+ */
+void printExecutionError(in string operation, in string errorMessage) {
+  import std.stdio : stderr;
+  stderr.writeln("Execution error for " ~ operation ~ ": " ~ errorMessage);
+  exit(1);
+}
+
+/**
  * If the verbose output is enabled, prints the message.
  */
 pragma(inline, true):
@@ -46,31 +55,3 @@ string getNullDevice() {
   version(Windows) { return "NUL"; }
 }
 
-/**
- * Converts an unsigned integer into the ordinal string representation.
- */
-string toShortOrdinal(int i) 
-in (i>0)
-{
-  import std.conv : to;
-  if (i >= 11 && i <= 13) { // Special cases
-    return i.to!string(10) ~ "th";
-  } else {
-    switch (i % 10) {
-      case 1:
-        return i.to!string(10) ~ "st";
-      case 2:
-        return i.to!string(10) ~ "nd";
-      case 3:
-        return i.to!string(10) ~ "rd";
-      default:
-        return i.to!string(10) ~ "th";
-    }
-  }
-}
-
-unittest {
-  assert(1.toShortOrdinal() == "1st");
-  assert(11.toShortOrdinal() == "11th");
-  assert(22.toShortOrdinal() == "22nd");
-}
