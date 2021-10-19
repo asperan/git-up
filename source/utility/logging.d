@@ -31,7 +31,7 @@ noreturn printParsingErrorAndExit(in string errorMessage, in string additionalIn
  */
 pragma(inline, true):
 void printVerbose(in string message) {
-  if (Configuration.getInstance.isVerbose()) {
+  if (Configuration.getInstance.isVerbose) {
     import std.stdio : writefln;
     writefln(message);
   }
