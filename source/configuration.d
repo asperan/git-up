@@ -100,10 +100,11 @@ private __gshared CommandLineOptionParser cliOptionParser =
 private __gshared immutable(void delegate(string)[string]) gitfileOptionHandlers;
 
 shared static this() {
+  import utility.parsing : parseBooleanLiteral;
   gitfileOptionHandlers = [
-    "updateOnly": (s) { import utility.parsing : parseBooleanLiteral; Configuration.getInstance.setUpdateOnly(parseBooleanLiteral(s, "updateOnly")); },
-    "forceInstall": (s) { import utility.parsing : parseBooleanLiteral; Configuration.getInstance.setForceInstall(parseBooleanLiteral(s, "forceInstall")); },
-    "createMissingDirs": (s) { import utility.parsing : parseBooleanLiteral; Configuration.getInstance.setCreateMissingDirs(parseBooleanLiteral(s, "createMissingDirs")); },
+    "updateOnly": (s) { Configuration.getInstance.setUpdateOnly(parseBooleanLiteral(s, "updateOnly")); },
+    "forceInstall": (s) { Configuration.getInstance.setForceInstall(parseBooleanLiteral(s, "forceInstall")); },
+    "createMissingDirs": (s) { Configuration.getInstance.setCreateMissingDirs(parseBooleanLiteral(s, "createMissingDirs")); },
   ];
 }
 
