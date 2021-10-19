@@ -3,21 +3,6 @@ module utility.parsing;
 import utility.logging;
 
 /**
- * Handles the remaining arguments by using the first as the operation and the second as the operation own argument.
- */
-void handleRemainingArgs(in string[] remainingArgs) {
-  import operations : operationMap;
-  auto selectedOperation = (remainingArgs[0] in operationMap);
-  if (selectedOperation is null) {
-    printErrorHelpAndExit("Operation '" ~ remainingArgs[0] ~ "' not supported.");
-  } else {
-    string operationArgument = "./Gitfile";
-    if (remainingArgs.length >= 2) { operationArgument = remainingArgs[1]; }
-    (*selectedOperation)(operationArgument);
-  }
-}
-
-/**
  * Parses a YAML-compliant boolean literal into its bool value.
  */
 bool parseBooleanLiteral(in string input, in string optionName) {
@@ -61,3 +46,24 @@ string getFullFilePath(in string filePath) {
            .absolutePath()
            .buildNormalizedPath();
 }
+
+string toShortOrdinal(int i) 
+in (i>0)
+{
+  import std.conv : to;
+  if (i >= 11 && i <= 13) { // Special cases
+    return i.to!string(10) ~ "th";
+  } else {
+    switch (i % 10) {
+      case 1:
+        return i.to!string(10) ~ "st";
+      case 2:
+        return i.to!string(10) ~ "nd";
+      case 3:
+        return i.to!string(10) ~ "rd";
+      default:
+        return i.to!string(10) ~ "th";
+    }
+  }
+}
+
