@@ -1,5 +1,7 @@
 module configuration;
 
+import std.typecons : Tuple;
+
 import asperan.cli_args.simple_option_parser;
 
 /**
@@ -63,6 +65,10 @@ string[] parseCliArguments(string[] args) {
   return cliOptionParser.parse(args);
 }
 
+void parseGitfileOption(Tuple!(string, string) options) {
+  gitfileOptionHandlers[options[0]](options[1]);
+}
+
 /**
  * Set the executable name. It should be used only at the start of the program (i.e. the first lines of the main function).
  * Params:
@@ -90,6 +96,16 @@ private __gshared CommandLineOptionParser cliOptionParser =
   .addOption("-w", "--verbose", "Verbose output.", () { Configuration.getInstance.setVerbose(true); })
   .addOption("-q", "--quiet", "Silent output. Prevail over verbose option.", () { Configuration.getInstance.setQuiet(true); })
 	.build();
+
+private __gshared immutable(void delegate(string)[string]) gitfileOptionHandlers;
+
+shared static this() {
+  gitfileOptionHandlers = [
+    "updateOnly": (s) { import utility.parsing : parseBooleanLiteral; Configuration.getInstance.setUpdateOnly(parseBooleanLiteral(s, "updateOnly")); },
+    "forceInstall": (s) { import utility.parsing : parseBooleanLiteral; Configuration.getInstance.setForceInstall(parseBooleanLiteral(s, "forceInstall")); },
+    "createMissingDirs": (s) { import utility.parsing : parseBooleanLiteral; Configuration.getInstance.setCreateMissingDirs(parseBooleanLiteral(s, "createMissingDirs")); },
+  ];
+}
 
 private void printHelpMessage() {
   import std.stdio : writeln;
