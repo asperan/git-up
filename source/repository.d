@@ -1,7 +1,5 @@
 module repository;
 
-import parsing_utils;
-
 /**
     Reference type. It can be a commit or a tag.
 */
@@ -12,7 +10,7 @@ enum TreeReferenceType {
 /**
     Local repository object. Represents a local repository based on the cloned remote repository and the local path where it is cloned.
 */
-class LocalRepository : NamedParsable {
+class LocalRepository {
   private:
     string p_host;
     string p_author;
@@ -57,14 +55,6 @@ class LocalRepository : NamedParsable {
       this.p_treeReference = treeReference;
       this.p_branch = branch;
       this.p_installScriptPath = installScriptPath;
-    }
-
-    /** Return the full name of the repository. */
-    string fullName() const {
-      string fullName = p_host ~ (p_host[p_host.length-1..p_host.length] == "/" ? "" : "/"); //@suppress(dscanner.suspicious.length_subtraction)
-      fullName ~= p_author ~ "/";
-      fullName ~= p_name;
-      return fullName;
     }
 
     /** Return the host. */
