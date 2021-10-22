@@ -1,5 +1,7 @@
 module repository;
 
+import asperan.option;
+
 /**
     Reference type. It can be a commit or a tag.
 */
@@ -22,7 +24,7 @@ class LocalRepository {
     string p_treeReference;
     string p_branch;
 
-    string p_installScriptPath;
+    Option!string p_installScriptPath;
 
   public:
     /**
@@ -37,7 +39,7 @@ class LocalRepository {
           TreeReferenceType treeReferenceType,
           string treeReference,
           string branch,
-          string installScriptPath)
+          Option!string installScriptPath)
     in {
       assert(p_host != "null");
       assert(author != "null");
@@ -72,7 +74,7 @@ class LocalRepository {
     /** Return the branch. */
     string branch() const { return p_branch; }
     /** Return the install script path. */
-    string installScriptPath() const { return p_installScriptPath; }
+    Option!string installScriptPath() const { return p_installScriptPath; }
 
     override size_t toHash() const @safe pure nothrow
     {
@@ -93,8 +95,8 @@ class LocalRepository {
 }
 
 unittest {
-  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.COMMIT, "4f942", "" ,"");
-  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.COMMIT, "latest", "master", "");
-  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.TAG, "latest", "", "");
+  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.COMMIT, "4f942", "" , Option!string.none());
+  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.COMMIT, "latest", "master", Option!string.none());
+  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.TAG, "latest", "", Option!string.none());
   // new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.TAG, "latest on branch1", ""); // Not valid, cannot specify branch with latest
 }
