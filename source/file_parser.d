@@ -78,7 +78,7 @@ in (currentRepository.hasNoRefTypeConflict(errorPosition))
   return new LocalRepository( currentRepository["host"].as!string, 
                               currentRepository["author"].as!string, 
                               currentRepository["name"].as!string, 
-                              currentRepository["localPath"].as!string, 
+                              currentRepository["localPath"].as!string, // TODO: asAbsolutePath ? 
                               reference[0],
                               reference[1],
                               reference[2],
@@ -126,7 +126,7 @@ private RepositoryReference getReferenceType(in Node repoNode, in string errorPo
   } else if ("tag" in repoNode) {
     return parseTagReference(repoNode["tag"].as!string, errorPosition);
   } else {
-    return printParsingErrorAndExit("Commit/Tag reference not found. Use 'commit' or 'tag' as key for reference.",  errorPosition);
+    printParsingErrorAndExit("Commit/Tag reference not found. Use 'commit' or 'tag' as key for reference.",  errorPosition);
   }
 }
 /*
@@ -147,7 +147,7 @@ private RepositoryReference parseCommitReference(in string treeReference, in str
     const string[] commitArgs = split(treeReference, " on ");
     return tuple(TreeReferenceType.COMMIT, commitArgs[0], commitArgs.length > 1 ? commitArgs[1] : "master");
   } else {  // No matches. Error!
-    return printParsingErrorAndExit("Commit reference can be in the form <SHA> or in the form 'latest on <branch>'. "
+    printParsingErrorAndExit("Commit reference can be in the form <SHA> or in the form 'latest on <branch>'. "
                               ~ "The branch name must be compliant to the git format. " 
                               ~ "For more information, see https://www.spinics.net/lists/git/msg133704.html .");
   }
@@ -157,11 +157,11 @@ private RepositoryReference parseTagReference(in string treeReference, in string
   import std.array : split;
   auto latestMatchResult = treeReference.matchAll(latestBranchedRegex); // @suppress(dscanner.suspicious.unmodified)
   if(!latestMatchResult.empty()) {  // latest-on-branch form matched. Error!
-    return printParsingErrorAndExit("Tag reference can only be in form '<tag name>' or '<latest>'. You should not specify the branch."); //@suppress(dscanner.style.long_line)
+    printParsingErrorAndExit("Tag reference can only be in form '<tag name>' or '<latest>'. You should not specify the branch."); //@suppress(dscanner.style.long_line)
   } else { // tag: <tag-name> ...
     const string[] referenceArray = split(treeReference, " on ");
     if (referenceArray.length > 1) { // <tag> on branch form -> invalid
-      return printParsingErrorAndExit("Tag reference branch cannot be specified.");
+      printParsingErrorAndExit("Tag reference branch cannot be specified.");
     } else { // tag: <tag-name>
       return tuple(TreeReferenceType.TAG, referenceArray[0], "");
     }
