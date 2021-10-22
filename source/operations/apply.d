@@ -1,8 +1,7 @@
 module operations.apply;
 
-import std.conv;
+import std.conv : to;
 import std.file : exists, read;
-import core.stdc.stdlib : system, exit;
 import std.path : dirSeparator;
 
 import repository;
@@ -41,53 +40,55 @@ void apply(string gitfilePath) {
 }
 
 private void handleRepositoryClone(in LocalRepository repository) {
+  import std.string : chomp;
   printVerbose("Checking existence of localPath...");
-  if (!exists(repository.localPath)) {
+  if (!repository.localPath.exists) {
     if (Configuration.getInstance.getCreateMissingDirs) {
       printVerbose("Creating new directory at \"" ~ repository.localPath ~ "\"...");
-      string dirCreateCommand;
-      version(linux) { dirCreateCommand = "mkdir -p"; }
-      version(Windows) { dirCreateCommand = "mkdir"; }
-      executeCommandString(dirCreateCommand ~ " \"" ~ repository.localPath ~ "\"");
+      executeCommandString(getDirCreateCommand ~ " \"" ~ repository.localPath ~ "\"");
     } else {
       printExecutionError("apply", "Local path does not exist and createMissingDirs option not enabled.");
     }
   }
   printVerbose("Initializing directory...");
-  executeCommandAndCheckError("cd \"" ~ repository.localPath ~ "\" && git init", "git init failed.");
-  const string remoteURL = repository.host 
-                          ~ (repository.host[repository.host.length-1..repository.host.length] == "/" ? "" : "/") //@suppress(dscanner.suspicious.length_subtraction)
-                          ~ repository.author ~ "/" 
-                          ~ repository.name;
+  if (changeDirAndExecute(repository.localPath, "git init")) { printApplyExecutionError("git init failed."); }
+  const string remoteURL = repository.host.chomp("/") ~ "/" ~ repository.author ~ "/" ~ repository.name;
   printVerbose("Adding remote \"" ~ remoteURL ~ "\" named \"origin\"");
-  executeCommandAndCheckError("cd \"" ~ repository.localPath ~ "\" && git remote add origin " ~ remoteURL, 
-                              "git remote failed to add the origin.");
+  if (changeDirAndExecute(repository.localPath, "git remote add origin " ~ remoteURL)) { printApplyExecutionError("git remote failed to add the origin."); }
   printVerbose("Initializing completed.");
 }
 
+pragma(inline, true):
+private string getDirCreateCommand() {
+  version(linux) { return "mkdir -p"; }
+  version(Windows) { return "mkdir"; }
+}
+
 private void handleRepositoryUpdate(in LocalRepository repository) {
-  assert(exists(repository.localPath()), "Local path should exist at this point.");
+  assert(repository.localPath.exists, "Local path should exist at this point.");
   printVerbose("Fetching commits and tags from all remote branches...");
-  executeCommandAndCheckError("cd \"" ~ repository.localPath() ~ "\" && git fetch --all --tags", 
-                              "git fetch could not fetch remote commits.");
-  string referenceToMerge;
-  if (repository.treeReference() == "latest") {
-    printVerbose("Retrieving latest " ~ (repository.refType() == TreeReferenceType.COMMIT ? "commit" : "tag") ~ "...");
-    if(changeDirAndExecute(repository.localPath, (repository.refType() == TreeReferenceType.COMMIT ? 
-                  "git log origin/" ~ repository.branch() ~ " --first-parent -n 1 --format=\"%H\" " :
+  if (changeDirAndExecute(repository.localPath, "git fetch --all --tags")) { printApplyExecutionError("git fetch could not fetch remote commits."); }
+  string referenceToMerge = getReferenceToMerge(repository);
+  printVerbose("Merging " ~ (repository.refType == TreeReferenceType.COMMIT ? "commit" : "tag") ~ " \"" ~ referenceToMerge ~ "\"..."); //@suppress(dscanner.style.long_line)
+  if (changeDirAndExecute(repository.localPath, "git merge " ~ referenceToMerge)) { printApplyExecutionError("git failed to merge."); }
+  printVerbose("Update complete.");
+}
+
+private string getReferenceToMerge(in LocalRepository repository) {
+  if (repository.treeReference == "latest") {
+    printVerbose("Retrieving latest " ~ (repository.refType == TreeReferenceType.COMMIT ? "commit" : "tag") ~ "...");
+    if(changeDirAndExecute(repository.localPath, (repository.refType == TreeReferenceType.COMMIT ? 
+                  "git log origin/" ~ repository.branch ~ " --first-parent -n 1 --format=\"%H\" " :
                   "git tag --sort=committerdate | tail -n 1") 
               ~ " > " ~ gitupTmpFile)) {
       printExecutionError("apply", "Selected last reference could not be retrieved.");
     }
-    referenceToMerge = read(repository.localPath() ~ dirSeparator ~ gitupTmpFile).to!string;
+    string referenceToMerge = read(repository.localPath ~ dirSeparator ~ gitupTmpFile).to!string;
     changeDirAndExecute(repository.localPath, "rm " ~ gitupTmpFile);
+    return referenceToMerge;
   } else {
-    referenceToMerge = repository.treeReference();
-  }
-  printVerbose("Merging " ~ (repository.refType() == TreeReferenceType.COMMIT ? "commit" : "tag") ~ " \"" ~ referenceToMerge ~ "\"..."); //@suppress(dscanner.style.long_line)
-  executeCommandAndCheckError("cd \"" ~ repository.localPath() ~ "\" && git merge " ~ referenceToMerge, 
-                              "git failed to merge.");
-  printVerbose("Update complete.");
+    return repository.treeReference;
+  }  
 }
 
 private void handleRepositoryInstall(in LocalRepository repository) {
@@ -117,7 +118,7 @@ private enum RepoAction {
 
 /** Returns the action to do for a specified repository, based on the active options. */
 private RepoAction computeActionForRepo(in LocalRepository repoInfo) {
-  if (!exists(repoInfo.localPath()) 
+  if (!repoInfo.localPath.exists
       || changeDirAndExecute(repoInfo.localPath(), "git status > " ~ getNullDevice() ~ " 2>&1")) { // Repository not present
     return Configuration.getInstance.getUpdateOnly ? RepoAction.NOTHING : RepoAction.CLONE;
   } else { // Repository present
@@ -140,10 +141,8 @@ private RepoAction computeActionForRepo(in LocalRepository repoInfo) {
   }
 }
 
-private void executeCommandAndCheckError(in string command, in string errorMessage) {
-  if(executeCommandString(command ~ (Configuration.getInstance.isQuiet ? "" : (" > " ~ getNullDevice())))) {
-    printExecutionError("apply", errorMessage);
-  }
+private void printApplyExecutionError(in string errorMessage) {
+  printExecutionError("apply", errorMessage);
 }
 
 private int changeDirAndExecute(in string directory, in string command) {
@@ -151,6 +150,7 @@ private int changeDirAndExecute(in string directory, in string command) {
 }
 
 private int executeCommandString(in string command) {
+  import core.stdc.stdlib : system;
   import std.string : toStringz;
   return system(command.toStringz());
 }
