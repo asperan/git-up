@@ -74,7 +74,7 @@ class LocalRepository {
     /** Return the branch. */
     string branch() const { return p_branch; }
     /** Return the install script path. */
-    Option!string installScriptPath() const { return p_installScriptPath; }
+    const(Option!string) installScriptPath() const { return p_installScriptPath; }
 
     override size_t toHash() const @safe pure nothrow
     {
