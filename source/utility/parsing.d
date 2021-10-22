@@ -47,9 +47,12 @@ string getFullFilePath(in string filePath) {
            .buildNormalizedPath();
 }
 
-string toShortOrdinal(int i) 
-in (i>0)
+string toShortOrdinal(T)(T i) 
 {
+  import std.traits : isIntegral, isUnsigned;
+  static assert(
+    isIntegral!T && isUnsigned!T
+  );
   import std.conv : to;
   if (i >= 11 && i <= 13) { // Special cases
     return i.to!string(10) ~ "th";
