@@ -1,6 +1,6 @@
 module repository;
 
-import parsing_utils;
+import asperan.option;
 
 /**
     Reference type. It can be a commit or a tag.
@@ -12,7 +12,7 @@ enum TreeReferenceType {
 /**
     Local repository object. Represents a local repository based on the cloned remote repository and the local path where it is cloned.
 */
-class LocalRepository : NamedParsable {
+class LocalRepository {
   private:
     string p_host;
     string p_author;
@@ -24,7 +24,7 @@ class LocalRepository : NamedParsable {
     string p_treeReference;
     string p_branch;
 
-    string p_installScriptPath;
+    Option!string p_installScriptPath;
 
   public:
     /**
@@ -39,7 +39,7 @@ class LocalRepository : NamedParsable {
           TreeReferenceType treeReferenceType,
           string treeReference,
           string branch,
-          string installScriptPath)
+          Option!string installScriptPath)
     in {
       assert(p_host != "null");
       assert(author != "null");
@@ -59,14 +59,6 @@ class LocalRepository : NamedParsable {
       this.p_installScriptPath = installScriptPath;
     }
 
-    /** Return the full name of the repository. */
-    string fullName() const {
-      string fullName = p_host ~ (p_host[p_host.length-1..p_host.length] == "/" ? "" : "/"); //@suppress(dscanner.suspicious.length_subtraction)
-      fullName ~= p_author ~ "/";
-      fullName ~= p_name;
-      return fullName;
-    }
-
     /** Return the host. */
     string host() const { return p_host; }
     /** Return the author. */
@@ -82,7 +74,7 @@ class LocalRepository : NamedParsable {
     /** Return the branch. */
     string branch() const { return p_branch; }
     /** Return the install script path. */
-    string installScriptPath() const { return p_installScriptPath; }
+    const(Option!string) installScriptPath() const { return p_installScriptPath; }
 
     override size_t toHash() const @safe pure nothrow
     {
@@ -103,8 +95,8 @@ class LocalRepository : NamedParsable {
 }
 
 unittest {
-  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.COMMIT, "4f942", "" ,"");
-  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.COMMIT, "latest", "master", "");
-  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.TAG, "latest", "", "");
+  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.COMMIT, "4f942", "" , Option!string.none());
+  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.COMMIT, "latest", "master", Option!string.none());
+  new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.TAG, "latest", "", Option!string.none());
   // new LocalRepository("foo", "bar", "foobar", "barfoo", TreeReferenceType.TAG, "latest on branch1", ""); // Not valid, cannot specify branch with latest
 }

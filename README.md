@@ -1,8 +1,8 @@
-# git-update
-Git-update is a command-line software to manage installation and update of repositories.
+# git-up
+Git-up is a command-line software to manage installation and update of repositories.
 
 ### Version 1.0.0 target features
-* [x] Global option: update_only -> on run do not download new repository.
+* [x] Global option: updateOnly -> on run do not download new repository.
 * [x] Apply a simple configuration (with no sublevels).
 * [x] Update a repository to the latest tag.
 
@@ -13,7 +13,7 @@ Git-update is a command-line software to manage installation and update of repos
 * [x] Update the repository to the latest commit on a branch.
 * [ ] Parse multiple files in a single call.
 * [x] Option for verbose output.
-* [ ] Prettify help string.
+* [x] Prettify help string.
 
 ## Getting started
 ### Prerequisites
@@ -22,14 +22,14 @@ Git-update is a command-line software to manage installation and update of repos
 1. Download the DUB package manager. Like the D compiler, it can be found in OS package managers. For windows, look in [the official release page](https://github.com/dlang/dub/releases).
 
 ### Compile git-updater
-Clone the repository with `git clone https://github.com/NJOYSoftware/git-updater.git` in a folder of your choice, then `cd` into that folder and run `dub build`.
+Clone the repository with `git clone https://github.com/asperan/git-up.git` in a folder of your choice, then `cd` into that folder and run `dub build`.
 
-DUB creates a file called `git-updater.exe`. If it is not executable, add execution permissions to the file.
+DUB creates a file called `git-up`. If it is not executable, add execution permissions to the file.
 
-To view the help panel, execute `./git-updater.exe --help`.
+To view the help panel, execute `./git-up.exe --help`.
 
 ### Use pre-compiled executable
-From the release page, download `git-updater_linux.exe` and enable execution for the file.
+From the release page, download the correct executable and enable execution for the file.
 
 ----
 
@@ -66,7 +66,6 @@ Repositories:
 * The localPath field points to the folder in which there will be the repository; it can be non-existent if the option `createMissingDirs` is true. For example, if the wanted repository is `python-cheatsheet` from *gto76* (first one in the Gitfile example), its localPath can be `/home/user/repos/python-cheatsheet`.
 * On the local side, the used branch is 'master', even if the remote has another name.
 * The dyaml library does **not** recognize tabs as whitespaces, so you **must** indent the Gitfile with spaces.
-* The installScript value is run as-is in a subshell, using the same working directory as the instance of `git-updater` launched. This means that you can either write the commands you want to run (for example `cd ./into/repo && make`) or the path to the script file to be run (as said in the first note, it is better using the absolute path of the file). (For more information see #3).
 
 ----
 

@@ -1,0 +1,11 @@
+GlobalOptions:
+  # updateOnly: y
+  # forceInstall: y
+  createMissingDirs: y
+
+Repositories:
+  - host: https://github.com
+    author: octocat
+    name: Hello-World
+    commit: latest on master
+    localPath: <Your/local/path> # CHANGE THIS LINE

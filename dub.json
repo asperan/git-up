@@ -1,18 +1,15 @@
 {
 	"authors": [
-		"Alex Speranza"
-	],
-	"buildOptions": [
-		"optimize",
-		"warningsAsErrors"
+		"Alex \"asperan\" Speranza"
 	],
 	"copyright": "Copyright © 2020, Alex Speranza",
 	"dependencies": {
-		"dyaml": "~>0.8.3"
+		"cli-args": "~>3.0.1",
+		"dyaml": "~>0.8.3",
+		"option": "~>2.0.2"
 	},
 	"description": "Command line tool to manage updates of git repositories.",
 	"license": "MPL-2.0",
-	"name": "git-updater",
-	"targetName": "git-updater.exe",
+	"name": "git-up",
 	"targetType": "executable"
 }
