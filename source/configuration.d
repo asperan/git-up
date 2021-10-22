@@ -80,8 +80,8 @@ void setExecutableName(in string execName) {
 
 string getHelpMessage() {
   import std.path : baseName;
-  string usageString = "Usage: " ~ baseName(executableName) ~ " <[-h|-v]|<sub-command> [options]>" ~ "\n";
-  string subcommandsString = "" ~ "\n";
+  string usageString = "Usage: " ~ baseName(executableName) ~ " <[-h|-v]|<operation> [options]>" ~ "\n";
+  string subcommandsString = "Operations:" ~ "\n" ~ getOperationHelpString;
   string cliOptionsString = "Options:" ~ "\n" ~ getSimpleHelpMessage(cliOptionParser);
   
   return usageString ~ "\n" ~ subcommandsString ~ "\n" ~ cliOptionsString;
@@ -108,6 +108,17 @@ shared static this() {
   ];
 }
 
+private string getOperationHelpString() {
+  import std.algorithm.searching : maxElement;
+  import std.algorithm.iteration : map, reduce;
+  import std.string : leftJustify;
+  string[string] operationHelpStrings = [
+    "apply": "Apply the changes specified in the Gitfile.",
+  ];
+  size_t maxOperationLength = operationHelpStrings.keys.map!(k => k.length).maxElement;
+  return operationHelpStrings.keys.map!(helpString => leftJustify(helpString, maxOperationLength) ~ "  " ~ operationHelpStrings[helpString] ~ "\n").reduce!"a ~ b";
+}
+
 private void printHelpMessage() {
   import std.stdio : writeln;
   import core.stdc.stdlib : exit;
@@ -115,7 +126,7 @@ private void printHelpMessage() {
   exit(0);
 }
 
-private string VERSION = "v1.2.0";
+private string VERSION = "v1.1.1";
 
 private void printVersionMessage() {
   import std.stdio : writeln;
