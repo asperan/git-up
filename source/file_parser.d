@@ -1,82 +1,93 @@
 module file_parser;
 
-import std.stdio;
 import std.regex;
-import std.path : dirSeparator;
 
 import repository;
-import parsing_utils;
-import file_option;
+import utility.logging;
+import utility.parsing : getFullFilePath, toShortOrdinal;
+import configuration;
+
+import asperan.option;
 import dyaml;
-import print_help : printVerbose;
 
 /**
     Loads Gitfile if it exists.
     Parses options and repository informations.
 */
-void loadFile(in string filePath, out RuntimeFileOption[] fileOptions, out LocalRepository[] repoInfo) {
+LocalRepository[] loadRepositoriesFromGitfile(in string filePath) {
+  const Node root = loadRootNodeFromFile(filePath);
+  parseGlobalOptions(root);
+  return parseRepositoryInformations(root);
+}
+
+private Node loadRootNodeFromFile(in string filePath) {
   import std.file : exists;
-  string parsedFilePath = parseFilePath(filePath == "" ? "." ~ dirSeparator ~ "Gitfile" : filePath);
-  if (!exists(parsedFilePath)) { printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' does not exist."); }
+  import std.path : dirSeparator;
+  string parsedFilePath = getFullFilePath(filePath == "" ? "." ~ dirSeparator ~ "Gitfile" : filePath);
+  if (!exists(parsedFilePath)) { 
+    printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' does not exist.");
+  }
   Loader loader = Loader.fromFile(parsedFilePath);
-  if (loader.empty()) { printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' is empty."); }
-  const Node root = loader.load();
+  if (loader.empty()) {
+    printParsingErrorAndExit("Gitfile '" ~ parsedFilePath ~ "' is empty.");
+  }
+  return loader.load();
+}
+
+private void parseGlobalOptions(Node root) {
+  import std.typecons : tuple;
   if ("GlobalOptions" in root && root["GlobalOptions"].type == NodeType.mapping) {
     printVerbose("Parsing file options...");
-    foreach (string key, string value ; root["GlobalOptions"])
-    {
-      fileOptions ~= buildFileOption(key, value);
+    foreach (string key, string value ; root["GlobalOptions"]) {
+      parseGitfileOption(tuple!(string, string)(key, value));
     }
-  }
-  assertValueUniqueness!(RuntimeFileOption)(fileOptions, "GlobalOptions");
-  if ("Repositories" in root && root["Repositories"].type == NodeType.sequence) {
-    printVerbose("Parsing repositories...");
-    for (int i = 0; i < root["Repositories"].length; i++ ) {
-      repoInfo ~= buildRepoInfo(root["Repositories"][i], " @ " ~ toShortOrdinal(i + 1) ~ " repository");
-    }
-    assertValueUniqueness!(LocalRepository)(repoInfo, "Repositories");
-  } else {
-    printParsingErrorAndExit("Repositories not specified or empty.");
   }
 }
+
+private LocalRepository[] parseRepositoryInformations(Node root) {
+  if ("Repositories" in root && root["Repositories"].type == NodeType.sequence) {
+    printVerbose("Parsing repositories...");
+    import std.range : zip, iota;
+    import std.algorithm.iteration : map;
+    import std.array : array;
+    return zip(root["Repositories"].sequence, iota(0, root["Repositories"].length))
+           .map!(r => buildRepoInfo(r[0], " @ " ~ toShortOrdinal(r[1] + 1) ~ " repository"))
+           .array;
+  } else {
+    return printParsingErrorAndExit("Repositories not specified or empty.");
+  }
+}
+
+import std.typecons : Tuple, tuple;
+
+private alias RepositoryReference = Tuple!(TreeReferenceType, string, string);
 
 private LocalRepository buildRepoInfo(in Node currentRepository, in string errorPosition) 
 in (currentRepository.hasAllMandatoryKeys(errorPosition))
 in (currentRepository.hasNoRefTypeConflict(errorPosition))
 {
   import std.path : isValidPath;
-  writeln("Fetching repository '" 
+  printOutput("Fetching repository '" 
           ~ currentRepository["host"].as!string ~ "/" 
           ~ currentRepository["author"].as!string ~ "/" 
           ~ currentRepository["name"].as!string ~ "'");
   if (!isValidPath(currentRepository["localPath"].as!string)) {
-    printParsingErrorAndExit("Local path is not valid.", errorPosition);
+    return printParsingErrorAndExit("Local path is not valid.", errorPosition);
   }
-  TreeReferenceType referenceType;
-  string referenceString;
-  string branchString;
-  getReferenceType(currentRepository, errorPosition, referenceType, referenceString, branchString);
-  string installScriptPath;
-  if ("installScript" in currentRepository) {
-    installScriptPath = parseFilePath(currentRepository["installScript"].as!string);
-    if (!isValidPath(installScriptPath)) {printParsingErrorAndExit("Install script path is not valid.", errorPosition);}
-  } else {
-    installScriptPath = "";
-  }
+  RepositoryReference reference = getReferenceType(currentRepository, errorPosition);
   return new LocalRepository( currentRepository["host"].as!string, 
                               currentRepository["author"].as!string, 
                               currentRepository["name"].as!string, 
                               currentRepository["localPath"].as!string, 
-                              referenceType,
-                              referenceString,
-                              branchString,
-                              installScriptPath);
+                              reference[0],
+                              reference[1],
+                              reference[2],
+                              getInstallScriptPath(currentRepository, errorPosition));
 }
 
 private bool hasNoRefTypeConflict(in Node repoNode, in string errorPosition) {
   if ("commit" in repoNode && "tag" in repoNode) {
-    printParsingErrorAndExit("Keys 'commit' and 'tag' cannot be used together.", errorPosition);
-    return false;
+    return printParsingErrorAndExit("Keys 'commit' and 'tag' cannot be used together.", errorPosition);
   } else {
     return true;
   }
@@ -102,122 +113,70 @@ private bool hasAllMandatoryKeys(in Node repoNode, in string errorPosition) {
   }
   if (missingKeys.length > 0) {
     import std.array : join;
-    printParsingErrorAndExit("The following keys are mandatory and are missing from the Gitfile: " 
+    return printParsingErrorAndExit("The following keys are mandatory and are missing from the Gitfile: " 
                               ~ missingKeys.join(", ") ~ ".", errorPosition);
-    return false;
   } else {
     return true;
   }
 }
 
-private immutable auto commitRegex = regex(`^([0-9a-f]{4,40})$`);
+private RepositoryReference getReferenceType(in Node repoNode, in string errorPosition) {
+  if ("commit" in repoNode) {
+    return parseCommitReference(repoNode["commit"].as!string, errorPosition);
+  } else if ("tag" in repoNode) {
+    return parseTagReference(repoNode["tag"].as!string, errorPosition);
+  } else {
+    return printParsingErrorAndExit("Commit/Tag reference not found. Use 'commit' or 'tag' as key for reference.",  errorPosition);
+  }
+}
+/*
 private immutable auto latestBranchedRegex = 
   regex(`^(latest)(( on )(?!\\)([^.]((?!(\.\.)|(\/\.)|(\\))([^\^\:\~\s\x00-\x1f\x7f]))*?)(?<!(\.lock)|([\/])))$`);
+*/
+private immutable auto latestBranchedRegex = 
+  regex(`^(latest)(( on )(?!\\)([^.]((?!(\.\.)|(\/\.)|(\\))([^\^\:\~\s]|[\x00-\x1f\x7f]))*?)(?<!(\.lock)|([\/])))$`);
 
-private void getReferenceType(in Node repoNode, 
-                              in string errorPosition, 
-                              out TreeReferenceType type, 
-                              out string referenceString,
-                              out string branchString) {
-  import std.array : array_split = split;
-  if ("commit" in repoNode) {
-    type = TreeReferenceType.COMMIT;
-    string treeReference = repoNode["commit"].as!string;
-    auto shaMatchResult = treeReference.matchAll(commitRegex); // @suppress(dscanner.suspicious.unmodified)
-    auto latestMatchResult = treeReference.matchAll(latestBranchedRegex); // @suppress(dscanner.suspicious.unmodified)
-    if (!shaMatchResult.empty() && shaMatchResult.front.hit == treeReference) { // SHA-form matched
-      referenceString = treeReference;
-      branchString = "";
-    } else if (!latestMatchResult.empty() && latestMatchResult.front.hit == treeReference) { // latest-form matched
-      const string[] commitArgs = array_split(treeReference, " on ");
-      referenceString = commitArgs[0];
-      branchString = commitArgs.length > 1 ? commitArgs[1] : "master";
-    } else {  // No matches. Error!
-      printParsingErrorAndExit("Commit reference can be in the form <SHA> or in the form 'latest on <branch>'. "
-                                ~ "The branch name must be compliant to the git format. " 
-                                ~ "For more information, see https://www.spinics.net/lists/git/msg133704.html .");
-      assert(0);
-    }
-  } else if ("tag" in repoNode) {
-    type = TreeReferenceType.TAG;
-    string treeReference = repoNode["tag"].as!string;
-    auto latestMatchResult = treeReference.matchAll(latestBranchedRegex); // @suppress(dscanner.suspicious.unmodified)
-    if(!latestMatchResult.empty()) {  // latest-on-branch form matched. Error!
-      printParsingErrorAndExit("Tag reference can only be in form '<tag name>' or '<latest>'. You should not specify the branch."); //@suppress(dscanner.style.long_line)
-      assert(0);
-    } else { // tag: <tag-name> ...
-      const string[] referenceArray = array_split(treeReference, " on ");
-      if (referenceArray.length > 1) { // <tag> on branch form -> invalid
-        printParsingErrorAndExit("Tag reference branch cannot be specified.");
-        assert(0);
-      } else { // tag: <tag-name>
-        referenceString = referenceArray[0];
-        branchString = "";
-      }
-    }
-  } else {
-    printParsingErrorAndExit("Commit/Tag reference not found. Use 'commit' or 'tag' as key for reference.", 
-                              errorPosition);
+private RepositoryReference parseCommitReference(in string treeReference, in string errorPosition) {
+  import std.array : split;
+  const auto commitRegex = regex(`^([0-9a-f]{4,40})$`);
+  auto shaMatchResult = treeReference.matchAll(commitRegex); // @suppress(dscanner.suspicious.unmodified)
+  auto latestMatchResult = treeReference.matchAll(latestBranchedRegex); // @suppress(dscanner.suspicious.unmodified)
+  if (!shaMatchResult.empty() && shaMatchResult.hit == treeReference) { // SHA-form matched
+    return tuple(TreeReferenceType.COMMIT, treeReference, "");
+  } else if (!latestMatchResult.empty() && latestMatchResult.hit == treeReference) { // latest-form matched
+    const string[] commitArgs = split(treeReference, " on ");
+    return tuple(TreeReferenceType.COMMIT, commitArgs[0], commitArgs.length > 1 ? commitArgs[1] : "master");
+  } else {  // No matches. Error!
+    return printParsingErrorAndExit("Commit reference can be in the form <SHA> or in the form 'latest on <branch>'. "
+                              ~ "The branch name must be compliant to the git format. " 
+                              ~ "For more information, see https://www.spinics.net/lists/git/msg133704.html .");
   }
 }
 
-private string toShortOrdinal(int i) 
-in (i>0)
-{
-  import std.conv : to;
-  if (i >= 11 && i <= 13) { // Special cases
-    return i.to!string(10) ~ "th";
-  } else {
-    switch (i % 10) {
-      case 1:
-        return i.to!string(10) ~ "st";
-      case 2:
-        return i.to!string(10) ~ "nd";
-      case 3:
-        return i.to!string(10) ~ "rd";
-      default:
-        return i.to!string(10) ~ "th";
+private RepositoryReference parseTagReference(in string treeReference, in string errorPosition) {
+  import std.array : split;
+  auto latestMatchResult = treeReference.matchAll(latestBranchedRegex); // @suppress(dscanner.suspicious.unmodified)
+  if(!latestMatchResult.empty()) {  // latest-on-branch form matched. Error!
+    return printParsingErrorAndExit("Tag reference can only be in form '<tag name>' or '<latest>'. You should not specify the branch."); //@suppress(dscanner.style.long_line)
+  } else { // tag: <tag-name> ...
+    const string[] referenceArray = split(treeReference, " on ");
+    if (referenceArray.length > 1) { // <tag> on branch form -> invalid
+      return printParsingErrorAndExit("Tag reference branch cannot be specified.");
+    } else { // tag: <tag-name>
+      return tuple(TreeReferenceType.TAG, referenceArray[0], "");
     }
   }
-}
+} 
 
-unittest {
-  assert(1.toShortOrdinal() == "1st");
-  assert(11.toShortOrdinal() == "11th");
-  assert(22.toShortOrdinal() == "22nd");
-}
-
-private void assertValueUniqueness(T : NamedParsable) (in T[] values, in string valuesName) 
-{
-  if (values.length > 0) {
-    for (int i = 0; i < values.length - 1; i++) { // @suppress(dscanner.suspicious.length_subtraction)
-      for (int j = i + 1; j < values.length; j++) {
-        if (values[i] == values[j]) {
-          printParsingErrorAndExit("Duplicate value '" ~ values[i].fullName() ~ "' found. Aborting.", 
-                                   " @ " ~ valuesName);
-        }
-      }
+private Option!string getInstallScriptPath(in Node currentRepository, in string errorPosition) {
+  import std.path : isValidPath;
+  if ("installScript" in currentRepository) {
+    string installScriptPath = getFullFilePath(currentRepository["installScript"].as!string);
+    if (!isValidPath(installScriptPath)) {
+      return printParsingErrorAndExit("Install script path is not valid.", errorPosition);
     }
-  }
-}
-
-private RuntimeFileOption buildFileOption(in string key, in string value)
-in (key.length > 0)
-in (value.length > 0) 
-{
-  immutable FileOption* fo = searchFileOption(key);
-  assert(fo, "This FileOptions should not be null!");
-  if (value == "null") {
-    printParsingErrorAndExit("'null' value passed to option '" ~ key ~ "'.");
-    return null;
+    return Option!string.some(installScriptPath);
   } else {
-    final switch (fo.argType()) {
-      case ArgumentType.BOOL:
-        return new RuntimeFileOption(fo, value.parseBooleanLiteral(key));
-      case ArgumentType.INT:
-        return new RuntimeFileOption(fo, value.parseIntegerLiteral(key));
-      case ArgumentType.STRING:
-        return new RuntimeFileOption(fo, value);
-    }
+    return Option!string.none();
   }
 }
