@@ -47,6 +47,19 @@ void printVerbose(in string message) {
 }
 
 /**
+ * Print a message if the flag --quiet (or equivalent) is NOT enabled.
+ * Params:
+ *   message = The message to print.
+ */
+pragma(inline, true):
+void printOutput(in string message) {
+  import std.stdio : writeln;
+  if (!Configuration.getInstance.isQuiet) {
+    writeln(message);
+  }
+}
+
+/**
  * Returns: the NULL device of the system.
  */
 pragma(inline, true):
